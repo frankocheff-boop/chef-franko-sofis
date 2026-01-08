@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Booking Menu</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>Booking Menu</h1>
+            <p class="subtitle">Reserve your spot with us</p>
+        </header>
+
+        <main>
+            <form id="bookingForm" class="booking-form">
+                <div class="form-group">
+                    <label for="name">Full Name *</label>
+                    <input type="text" id="name" name="name" required placeholder="Enter your full name"
+                        autocomplete="name">
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email *</label>
+                    <input type="email" id="email" name="email" required placeholder="your.email@example.com"
+                        autocomplete="email">
+                </div>
+
+                <div class="form-group">
+                    <label for="phone">Phone Number *</label>
+                    <input type="tel" id="phone" name="phone" required placeholder="(123) 456-7890" autocomplete="tel">
+                </div>
+
+                <div class="form-group">
+                    <label for="date">Booking Date *</label>
+                    <input type="date" id="date" name="date" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="time">Booking Time *</label>
+                    <input type="time" id="time" name="time" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="guests">Number of Guests *</label>
+                    <select id="guests" name="guests" required>
+                        <option value="">Select number of guests</option>
+                        <option value="1">1 Guest</option>
+                        <option value="2">2 Guests</option>
+                        <option value="3">3 Guests</option>
+                        <option value="4">4 Guests</option>
+                        <option value="5">5 Guests</option>
+                        <option value="6">6 Guests</option>
+                        <option value="7">7 Guests</option>
+                        <option value="8">8 Guests</option>
+                        <option value="more">More than 8</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="service">Service Type *</label>
+                    <select id="service" name="service" required>
+                        <option value="">Select service type</option>
+                        <option value="restaurant">Restaurant Dining</option>
+                        <option value="event">Event Space</option>
+                        <option value="private">Private Room</option>
+                        <option value="catering">Catering Service</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="notes">Special Requests</label>
+                    <textarea id="notes" name="notes" rows="4"
+                        placeholder="Any special requirements or dietary restrictions?"></textarea>
+                </div>
+
+                <button type="submit" class="submit-btn">Submit Booking</button>
+            </form>
+
+            <div id="confirmation" class="confirmation hidden">
+                <div class="confirmation-content">
+                    <h2>✓ Booking Confirmed!</h2>
+                    <p>Thank you for your reservation. We've sent a confirmation email to <span
+                            id="confirmEmail"></span></p>
+                    <div id="bookingDetails" class="booking-details"></div>
+                    <button id="newBooking" class="submit-btn">Make Another Booking</button>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <p>&copy; 2025 Booking Menu System</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>

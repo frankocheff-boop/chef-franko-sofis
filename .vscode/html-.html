@@ -1,0 +1,1065 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Weekly Menu - Chef Franko at Verano Estate</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap');
+
+        Code:root {
+            --bg-1: #f8fafc;
+            --muted: #64748b;
+            --accent-green-start: #10b981;
+            --accent-green-end: #059669;
+            --accent-pink-start: #ec4899;
+            --accent-pink-end: #be185d;
+            --accent-gold-start: #f59e0b;
+            --accent-gold-end: #d97706;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            color: #0f172a;
+            margin: 0;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .font-playfair {
+            font-family: 'Playfair Display', serif;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        header.header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding: 1.6rem;
+            background: #ffffff;
+            border-radius: 16px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+        }
+
+        header.header img {
+            height: 80px;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+        }
+
+        nav {
+            background: #fff;
+            border-bottom: 1px solid #e6eef6;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            box-shadow: 0 4px 10px rgba(15, 23, 42, 0.03);
+        }
+
+        .nav-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0.75rem 1rem;
+            display: flex;
+            justify-content: center;
+            gap: 0.75rem;
+            overflow-x: auto;
+        }
+
+        .nav-btn {
+            background: #f8fafc;
+            color: #475569;
+            border: 1px solid #e2e8f0;
+            padding: 0.6rem 1rem;
+            border-radius: 9999px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all .18s ease;
+            white-space: nowrap;
+        }
+
+        .nav-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+        }
+
+        .nav-btn.active {
+            background: linear-gradient(135deg, var(--accent-pink-start) 0%, var(--accent-pink-end) 100%);
+            color: white;
+            border-color: var(--accent-pink-end);
+        }
+
+        .section-content {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(15, 23, 42, 0.06);
+            padding: 2rem;
+            margin: 1.5rem 0;
+            border: 1px solid #e2e8f0;
+        }
+
+        .day-btn {
+            background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+            color: white;
+            border: none;
+            padding: 0.6rem 0.9rem;
+            border-radius: 9999px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform .15s ease;
+            text-transform: capitalize;
+            font-size: 0.9rem;
+        }
+
+        .day-btn.active {
+            background: linear-gradient(135deg, var(--accent-green-start) 0%, var(--accent-green-end) 100%);
+        }
+
+        .meal-title {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: var(--accent-green-start);
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .dishes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1rem;
+        }
+
+        .dish-card {
+            position: relative;
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 12px;
+            padding: 1.25rem;
+            border: 2px solid transparent;
+            transition: all .22s ease;
+        }
+
+        .dish-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 14px 30px rgba(2, 6, 23, 0.08);
+            border-color: rgba(2, 6, 23, 0.03);
+        }
+
+        .dish-card.selected {
+            border-color: var(--accent-pink-start);
+            background: linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%);
+            box-shadow: 0 10px 28px rgba(236, 72, 153, 0.12);
+        }
+
+        .calorie-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: linear-gradient(135deg, var(--accent-green-start) 0%, var(--accent-green-end) 100%);
+            color: white;
+            padding: 0.25rem 0.6rem;
+            border-radius: 9999px;
+            font-weight: 700;
+            font-size: 0.8rem;
+            box-shadow: 0 3px 10px rgba(16, 185, 129, 0.2);
+        }
+
+        .special-badge {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            background: linear-gradient(135deg, var(--accent-gold-start) 0%, var(--accent-gold-end) 100%);
+            color: white;
+            padding: .45rem;
+            border-radius: 50%;
+            box-shadow: 0 6px 16px rgba(245, 158, 11, 0.12);
+            font-size: 1.1rem;
+        }
+
+        .special-highlight {
+            background: linear-gradient(135deg, #fff7ed 0%, #fff1d6 100%);
+            border: 1px solid #fde68a;
+        }
+
+        .dish-name {
+            font-weight: 700;
+            font-size: 1.05rem;
+            color: #0f172a;
+            margin-bottom: 0.35rem;
+        }
+
+        .dish-description {
+            color: var(--muted);
+            margin-bottom: 0.75rem;
+            line-height: 1.45;
+            font-size: 0.95rem;
+        }
+
+        .select-btn {
+            background: linear-gradient(135deg, var(--accent-pink-start) 0%, var(--accent-pink-end) 100%);
+            color: white;
+            border: none;
+            padding: 0.6rem 0.8rem;
+            border-radius: 8px;
+            width: 100%;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform .12s ease;
+        }
+
+        .select-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .select-btn.selected {
+            background: linear-gradient(135deg, var(--accent-green-start) 0%, var(--accent-green-end) 100%);
+        }
+
+        .order-form {
+            background: #f0f9ff;
+            border: 2px solid #0ea5e9;
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin-top: 1.25rem;
+        }
+
+        .submit-order-btn {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+            border: none;
+            padding: 0.75rem 1rem;
+            border-radius: 12px;
+            font-weight: 800;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .cart-summary {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(15, 23, 42, 0.12);
+            padding: 1rem;
+            border: 2px solid #ec4899;
+            z-index: 1000;
+            width: 320px;
+            max-width: calc(100% - 40px);
+        }
+
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            gap: 0.5rem;
+            padding: 0.4rem 0;
+            border-bottom: 1px solid #eef2f6;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .success-message {
+            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+            border: 2px solid #10b981;
+            color: #047857;
+            padding: 1rem;
+            border-radius: 12px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        footer {
+            text-align: center;
+            padding: 1.25rem 0;
+            margin-top: 1.5rem;
+            color: #475569;
+        }
+
+        @media (max-width:640px) {
+            .nav-inner {
+                padding: 0.5rem
+            }
+
+            .container {
+                padding: 1rem
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header class="header"> <img
+                src="https://assets-global.website-files.com/62276c752c9a2d580437a345/624f7964573b3780376c6660_Verano_Logo_Small.png"
+                alt="Verano Estate Logo"
+                onerror="this.src='https://placehold.co/100x80/f8fafc/0f172a?text=Verano+Logo'; this.alt='Verano Estate Logo';" />
+            <h1 class="font-playfair text-4xl md:text-5xl font-bold mb-1">Chef Franko at Verano Estate</h1>
+            <p class="text-lg" style="color:#64748b">Authentic Mexican cuisine in the heart of Napa Valley</p>
+        </header>
+        Code
+        <nav aria-label="Main navigation">
+            <div class="nav-inner">
+                <button class="nav-btn active" onclick="showSection('breakfast', this)">🌅 Breakfast</button>
+                <button class="nav-btn" onclick="showSection('lunch', this)">🍽️ Lunch</button>
+                <button class="nav-btn" onclick="showSection('dinner', this)">🌙 Dinner</button>
+                <button class="nav-btn" onclick="showSection('allergies', this)">⚠️ Allergies</button>
+                <button class="nav-btn" onclick="showSection('order', this)">📋 My Order</button>
+            </div>
+        </nav>
+
+        <main>
+            <!-- Breakfast -->
+            <section id="breakfast" class="section-content">
+                <div style="text-align:center; margin-bottom:1rem;">
+                    <h2 class="meal-title font-playfair">🌅 Dream Breakfasts</h2>
+                    <p style="color:#64748b; max-width:900px; margin:0 auto;">Start your day with handcrafted breakfast
+                        specials prepared with local ingredients and Chef Franko’s signature touch.</p>
+                </div>
+
+                <div style="display:flex; justify-content:center; margin-bottom:1rem;">
+                    <div
+                        style="background:#fff; padding:6px; border-radius:999px; box-shadow:0 6px 18px rgba(2,6,23,0.04); border:1px solid #fce7f3;">
+                        <div style="display:flex; gap:8px; padding:4px; overflow-x:auto;">
+                            <button class="day-btn active" onclick="showBreakfastDay('monday', this)">Mon</button>
+                            <button class="day-btn" onclick="showBreakfastDay('tuesday', this)">Tue</button>
+                            <button class="day-btn" onclick="showBreakfastDay('wednesday', this)">Wed</button>
+                            <button class="day-btn" onclick="showBreakfastDay('thursday', this)">Thu</button>
+                            <button class="day-btn" onclick="showBreakfastDay('friday', this)">Fri</button>
+                            <button class="day-btn" onclick="showBreakfastDay('saturday', this)">Sat</button>
+                            <button class="day-btn" onclick="showBreakfastDay('sunday', this)">Sun</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Monday Breakfast -->
+                <div id="breakfast-monday" class="breakfast-day">
+                    <div class="dishes-grid">
+                        <div class="dish-card special-highlight" data-dish="eggs-benedict" data-calories="485">
+                            <div class="calorie-badge">485 cal</div>
+                            <div class="special-badge">⭐</div>
+                            <div class="dish-name">Eggs Benedict</div>
+                            <div class="dish-description">Poached eggs on toasted English muffin with Canadian ham and
+                                secret hollandaise, served with maple-smoked bacon.</div>
+                            <button class="select-btn"
+                                onclick="toggleDishSelection(this, 'Eggs Benedict - Monday', 485, 0)">Select this
+                                Dish</button>
+                        </div>
+
+                        <div class="dish-card" data-dish="monday-sides">
+                            <div class="dish-name">Monday Sides</div>
+                            <div class="dish-description">Maple-smoked bacon · Premium Colombian coffee · Strawberries &
+                                cream · Toasted brioche</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tuesday Breakfast -->
+                <div id="breakfast-tuesday" class="breakfast-day hidden">
+                    <div class="dishes-grid">
+                        <div class="dish-card special-highlight" data-dish="huevos-rancheros" data-calories="520">
+                            <div class="calorie-badge">520 cal</div>
+                            <div class="special-badge">🔥</div>
+                            <div class="dish-name">Huevos Rancheros</div>
+                            <div class="dish-description">Fried eggs over crispy tortilla, topped with house red salsa,
+                                refried beans and fresh avocado.</div>
+                            <button class="select-btn"
+                                onclick="toggleDishSelection(this, 'Huevos Rancheros - Tuesday', 520, 0)">Select this
+                                Dish</button>
+                        </div>
+
+                        <div class="dish-card" data-dish="tuesday-sides">
+                            <div class="dish-name">Tuesday Sides</div>
+                            <div class="dish-description">Artisan chorizo · Olla-style coffee with cinnamon · Fresh pico
+                                de gallo · Handmade tortillas</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Wednesday Breakfast -->
+                <div id="breakfast-wednesday" class="breakfast-day hidden">
+                    <div class="dishes-grid">
+                        <div class="dish-card special-highlight" data-dish="eggs-florentine" data-calories="395">
+                            <div class="calorie-badge">395 cal</div>
+                            <div class="special-badge">🌿</div>
+                            <div class="dish-name">Eggs Florentine</div>
+                            <div class="dish-description">Poached eggs on garlic-sautéed spinach with goat cheese and
+                                herb hollandaise.</div>
+                            <button class="select-btn"
+                                onclick="toggleDishSelection(this, 'Eggs Florentine - Wednesday', 395, 0)">Select this
+                                Dish</button>
+                        </div>
+
+                        <div class="dish-card" data-dish="wednesday-sides">
+                            <div class="dish-name">Wednesday Sides</div>
+                            <div class="dish-description">Smoked salmon · Jasmine green tea · Avocado with lime ·
+                                Artisanal wholegrain bread</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Thursday Breakfast -->
+                <div id="breakfast-thursday" class="breakfast-day hidden">
+                    <div class="dishes-grid">
+                        <div class="dish-card special-highlight" data-dish="truffle-scrambled" data-calories="445">
+                            <div class="calorie-badge">445 cal</div>
+                            <div class="special-badge">🧀</div>
+                            <div class="dish-name">Truffled Scrambled Eggs</div>
+                            <div class="dish-description">Creamy scrambled eggs with gruyere and a drizzle of truffle
+                                oil, chives on top.</div>
+                            <button class="select-btn"
+                                onclick="toggleDishSelection(this, 'Truffled Scrambled Eggs - Thursday', 445, 0)">Select
+                                this Dish</button>
+                        </div>
+
+                        <div class="dish-card" data-dish="thursday-sides">
+                            <div class="dish-name">Thursday Sides</div>
+                            <div class="dish-description">Crispy pancetta · Cappuccino · Sautéed mushrooms · Butter
+                                croissant</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Friday Breakfast -->
+                <div id="breakfast-friday" class="breakfast-day hidden">
+                    <div class="dishes-grid">
+                        <div class="dish-card special-highlight" data-dish="mexican-scrambled" data-calories="465">
+                            <div class="calorie-badge">465 cal</div>
+                            <div class="special-badge">🎉</div>
+                            <div class="dish-name">Mexican-style Scrambled Eggs</div>
+                            <div class="dish-description">Scrambled eggs with tomato, onion, serrano chile and cilantro,
+                                served traditionally.</div>
+                            <button class="select-btn"
+                                onclick="toggleDishSelection(this, 'Mexican-style Scrambled Eggs - Friday', 465, 0)">Select
+                                this Dish</button>
+                        </div>
+
+                        <div class="dish-card" data-dish="friday-sides">
+                            <div class="dish-name">Friday Sides</div>
+                            <div class="dish-description">Northern-style machaca · Strong Americano · Spicy green salsa
+                                · Corn tortillas</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Saturday Breakfast -->
+                <div id="breakfast-saturday" class="breakfast-day hidden">
+                    <div class="dishes-grid">
+                        <div class="dish-card special-highlight" data-dish="migas" data-calories="510">
+                            <div class="calorie-badge">510 cal</div>
+                            <div class="special-badge">🥞</div>
+                            <div class="dish-name">Eggs with Migas</div>
+                            <div class="dish-description">Scrambled eggs with crispy tortilla pieces, poblano chile and
+                                Oaxaca cheese.</div>
+                            <button class="select-btn"
+                                onclick="toggleDishSelection(this, 'Eggs with Migas - Saturday', 510, 0)">Select this
+                                Dish</button>
+                        </div>
+
+                        <div class="dish-card" data-dish="saturday-sides">
+                            <div class="dish-name">Saturday Sides</div>
+                            <div class="dish-description">Maple-glazed bacon · Hot chocolate · Natural honey · Mexican
+                                sweet bread</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sunday Breakfast -->
+                <div id="breakfast-sunday" class="breakfast-day hidden">
+                    <div class="dishes-grid">
+                        <div class="dish-card special-highlight" data-dish="motulenos" data-calories="580">
+                            <div class="calorie-badge">580 cal</div>
+                            <div class="special-badge">👑</div>
+                            <div class="dish-name">Huevos Motuleños</div>
+                            <div class="dish-description">Fried eggs atop toasted tortilla with beans, tomato sauce,
+                                ham, peas and plantain.</div>
+                            <button class="select-btn"
+                                onclick="toggleDishSelection(this, 'Huevos Motuleños - Sunday', 580, 0)">Select this
+                                Dish</button>
+                        </div>
+
+                        <div class="dish-card" data-dish="sunday-sides">
+                            <div class="dish-name">Sunday Sides</div>
+                            <div class="dish-description">Serrano ham · Double espresso · Manchego cheese · Fresh orange
+                                juice</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Lunch -->
+            <section id="lunch" class="section-content hidden">
+                <div style="text-align:center; margin-bottom:1rem;">
+                    <h2 class="meal-title font-playfair">🍽️ Dream Lunches</h2>
+                    <p style="color:#64748b; max-width:900px; margin:0 auto;">Lunchtime is a celebration of flavors —
+                        starter, main, sides and a dessert curated by Chef Franko.</p>
+                </div>
+
+                <div style="display:flex; justify-content:center; margin-bottom:1rem;">
+                    <div
+                        style="background:#fff; padding:6px; border-radius:999px; box-shadow:0 6px 18px rgba(2,6,23,0.04); border:1px solid #fce7f3;">
+                        <div style="display:flex; gap:8px; padding:4px; overflow-x:auto;">
+                            <button class="day-btn active" onclick="showLunchDay('monday', this)">Mon</button>
+                            <button class="day-btn" onclick="showLunchDay('tuesday', this)">Tue</button>
+                            <button class="day-btn" onclick="showLunchDay('wednesday', this)">Wed</button>
+                            <button class="day-btn" onclick="showLunchDay('thursday', this)">Thu</button>
+                            <button class="day-btn" onclick="showLunchDay('friday', this)">Fri</button>
+                            <button class="day-btn" onclick="showLunchDay('saturday', this)">Sat</button>
+                            <button class="day-btn" onclick="showLunchDay('sunday', this)">Sun</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Monday Lunch -->
+                <div id="lunch-monday" class="lunch-day">
+                    <div class="dishes-grid">
+                        <div class="dish-card special-highlight" data-dish="grilled-salmon" data-calories="650">
+                            <div class="calorie-badge">650 cal</div>
+                            <div class="special-badge">💕</div>
+                            <div class="dish-name">Grilled Salmon</div>
+                            <div class="dish-description">Norwegian salmon with asparagus risotto, white wine reduction,
+                                herb oil.</div>
+                            <button class="select-btn"
+                                onclick="toggleDishSelection(this, 'Grilled Salmon - Monday Lunch', 650, 0)">Select this
+                                Dish</button>
+                        </div>
+
+                        <div class="dish-card" data-dish="monday-lunch-menu">
+                            <div class="dish-name">Complete Monday Menu</div>
+                            <div class="dish-description">Starter: Beet carpaccio with goat cheese · Sides: Baby
+                                vegetables · Dessert: Berry panna cotta · Drink: Hibiscus water with mint</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tuesday Lunch -->
+                <div id="lunch-tuesday" class="lunch-day hidden">
+                    <div class="dishes-grid">
+                        <div class="dish-card special-highlight" data-dish="carne-asada" data-calories="720">
+                            <div class="calorie-badge">720 cal</div>
+                            <div class="special-badge">🔥</div>
+                            <div class="dish-name">Carne Asada</div>
+                            <div class="dish-description">Marinated arrachera grilled and served with homemade guacamole
+                                and warm flour tortillas.</div>
+                            <button class="select-btn"
+                                onclick="toggleDishSelection(this, 'Carne Asada - Tuesday Lunch', 720, 0)">Select this
+                                Dish</button>
+                        </div>
+
+                        <div class="dish-card" data-dish="tuesday-lunch-menu">
+                            <div class="dish-name">Complete Tuesday Menu</div>
+                            <div class="dish-description">Starter: Tortilla soup · Sides: Charro beans and nopales ·
+                                Dessert: Napolitano flan · Drink: Horchata</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Wednesday Lunch -->
+                <div id="lunch-wednesday" class="lunch-day hidden">
+                    <div class="dishes-grid">
+                        <div class="dish-card special-highlight" data-dish="mediterranean-chicken" data-calories="580">
+                            <div class="calorie-badge">580 cal</div>
+                            <div class="special-badge">🌿</div>
+                            <div class="dish-name">Mediterranean Chicken</div>
+                            <div class="dish-description">Organic chicken breast with tricolor quinoa, roasted
+                                vegetables and Greek yogurt sauce.</div>
+                            <button class="select-btn"
+                                onclick="toggleDishSelection(this, 'Mediterranean Chicken - Wednesday Lunch', 580, 0)">Select
+                                this Dish</button>
+                        </div>
+
+                        <div class="dish-card" data-dish="wednesday-lunch-menu">
+                            <div class="dish-name">Complete Wednesday Menu</div>
+                            <div class="dish-description">Starter: Greek salad · Sides: Hummus with pita · Dessert:
+                                Yogurt with honey & nuts · Drink: Green tea</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Thursday Lunch -->
+                <div id="lunch-thursday" class="lunch-day hidden">
+                    <div class="dishes-grid">
+                        <div class="dish-card special-highlight" data-dish="truffle-pasta" data-calories="680">
+                            <div class="calorie-badge">680 cal</div>
+                            <div class="special-badge">✨</div>
+                            <div class="dish-name">Truffle Pasta</div>
+                            <div class="dish-description">House fettuccine with black truffle, parmigiano and extra
+                                virgin olive oil.</div>
+                            <button class="select-btn"
+                                onclick="toggleDishSelection(this, 'Truffle Pasta - Thursday Lunch', 680, 0)">Select
+                                this Dish</button>
+                        </div>
+
+                        <div class="dish-card" data-dish="thursday-lunch-menu">
+                            <div class="dish-name">Complete Thursday Menu</div>
+                            <div class="dish-description">Starter: Tomato basil bruschetta · Sides: Arugula & parmesan
+                                salad · Dessert: Tiramisu · Drink: Lemon-basil lemonade</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Friday Lunch -->
+                <div id="lunch-friday" class="lunch-day hidden">
+                    <div class="dishes-grid">
+                        <div class="dish-card special-highlight" data-dish="gourmet-tacos" data-calories="620">
+                            <div class="calorie-badge">620 cal</div>
+                            <div class="special-badge">🎉</div>
+                            <div class="dish-name">Gourmet Tacos</div>
+                            <div class="dish-description">Three artisan tacos: carnitas, battered fish and vegetarian,
+                                with house salsas.</div>
+                            <button class="select-btn"
+                                onclick="toggleDishSelection(this, 'Gourmet Tacos - Friday Lunch', 620, 0)">Select this
+                                Dish</button>
+                        </div>
+
+                        <div class="dish-card" data-dish="friday-lunch-menu">
+                            <div class="dish-name">Complete Friday Menu</div>
+                            <div class="dish-description">Starter: Guacamole with artisan chips · Sides: Rice & beans ·
+                                Dessert: Churros with chocolate · Drink: Virgin margarita</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Saturday Lunch -->
+                <div id="lunch-saturday" class="lunch-day hidden">
+                    <div class="dishes-grid">
+                        <div class="dish-card special-highlight" data-dish="seafood-paella" data-calories="750">
+                            <div class="calorie-badge">750 cal</div>
+                            <div class="special-badge">🌊</div>
+                            <div class="dish-name">Seafood Paella</div>
+                            <div class="dish-description">Valencian-style paella with shrimp, mussels, octopus and
+                                authentic saffron.</div>
+                            <button class="select-btn"
+                                onclick="toggleDishSelection(this, 'Seafood Paella - Saturday Lunch', 750, 0)">Select
+                                this Dish</button>
+                        </div>
+
+                        <div class="dish-card" data-dish="saturday-lunch-menu">
+                            <div class="dish-name">Complete Saturday Menu</div>
+                            <div class="dish-description">Starter: White fish ceviche · Sides: Garlic bread · Dessert:
+                                Crema Catalana · Drink: White sangria (non-alcoholic)</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sunday Lunch -->
+                <div id="lunch-sunday" class="lunch-day hidden">
+                    <div class="dishes-grid">
+                        <div class="dish-card special-highlight" data-dish="rosemary-lamb" data-calories="820">
+                            <div class="calorie-badge">820 cal</div>
+                            <div class="special-badge">👑</div>
+                            <div class="dish-name">Rosemary Lamb</div>
+                            <div class="dish-description">Roast leg of lamb with herb crust, truffled mashed potatoes
+                                and red wine reduction.</div>
+                            <button class="select-btn"
+                                onclick="toggleDishSelection(this, 'Rosemary Lamb - Sunday Lunch', 820, 0)">Select this
+                                Dish</button>
+                        </div>
+
+                        <div class="dish-card" data-dish="sunday-lunch-menu">
+                            <div class="dish-name">Complete Sunday Menu</div>
+                            <div class="dish-description">Starter: Lamb consomme · Sides: Provençal ratatouille ·
+                                Dessert: Tarte Tatin · Drink: Sparkling grape juice</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Dinner -->
+            <section id="dinner" class="section-content hidden">
+                <div style="text-align:center; margin-bottom:1rem;">
+                    <h2 class="meal-title font-playfair">🌙 Contemporary Mexican Dinners</h2>
+                    <p style="color:#64748b; max-width:900px; margin:0 auto;">Refined contemporary Mexican cuisine
+                        combining tradition and modern technique.</p>
+                </div>
+
+                <div style="display:flex; justify-content:center; margin-bottom:1rem;">
+                    <div
+                        style="background:#fff; padding:6px; border-radius:999px; box-shadow:0 6px 18px rgba(2,6,23,0.04); border:1px solid #fce7f3;">
+                        <div style="display:flex; gap:8px; padding:4px; overflow-x:auto;">
+                            <button class="day-btn active" onclick="showDinnerDay('monday', this)">Mon</button>
+                            <button class="day-btn" onclick="showDinnerDay('tuesday', this)">Tue</button>
+                            <button class="day-btn" onclick="showDinnerDay('wednesday', this)">Wed</button>
+                            <button class="day-btn" onclick="showDinnerDay('thursday', this)">Thu</button>
+                            <button class="day-btn" onclick="showDinnerDay('friday', this)">Fri</button>
+                            <button class="day-btn" onclick="showDinnerDay('saturday', this)">Sat</button>
+                            <button class="day-btn" onclick="showDinnerDay('sunday', this)">Sun</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Monday Dinner -->
+                <div id="dinner-monday" class="dinner-day">
+                    <div class="dishes-grid">
+                        <div class="dish-card special-highlight" data-dish="duck-mole" data-calories="850">
+                            <div class="calorie-badge">850 cal</div>
+                            <div class="special-badge">🦆</div>
+                            <div class="dish-name">Duck in Mole Negro</div>
+                            <div class="dish-description">Confit duck breast with Oaxaca black mole, sweet potato purée
+                                and microgreens.</div>
+                            <button class="select-btn"
+                                onclick="toggleDishSelection(this, 'Duck in Mole Negro - Monday Dinner', 850, 0)">Select
+                                this Dish</button>
+                        </div>
+
+                        <div class="dish-card" data-dish="monday-dinner-menu">
+                            <div class="dish-name">Monday Dinner Experience</div>
+                            <div class="dish-description">Starter: Huitlacoche truffle quesadilla · Sides: Esquites with
+                                cotija · Dessert: Chocolate souffle · Drink: Mezcal cocktail</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tuesday Dinner -->
+                <div id="dinner-tuesday" class="dinner-day hidden">
+                    <div class="dishes-grid">
+                        <div class="dish-card special-highlight" data-dish="octopus-pipian" data-calories="720">
+                            <div class="calorie-badge">720 cal</div>
+                            <div class="special-badge">🐙</div>
+                            <div class="dish-name">Grilled Octopus with Pepian</div>
+                            <div class="dish-description">Charred octopus with pumpkin seed pipián, cactus salad and
+                                hibiscus reduction.</div>
+                            <button class="select-btn"
+                                onclick="toggleDishSelection(this, 'Grilled Octopus with Pepian - Tuesday Dinner', 720, 0)">Select
+                                this Dish</button>
+                        </div>
+
+                        <div class="dish-card" data-dish="tuesday-dinner-menu">
+                            <div class="dish-name">Tuesday Dinner Experience</div>
+                            <div class="dish-description">Starter: Black aguachile · Sides: Quintoniles with epazote ·
+                                Dessert: Mamey ice cream with amaranto</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Wednesday Dinner -->
+                <div id="dinner-wednesday" class="dinner-day hidden">
+                    <div class="dishes-grid">
+                        <div class="dish-card special-highlight" data-dish="lamb-cochinita" data-calories="780">
+                            <div class="calorie-badge">780 cal</div>
+                            <div class="special-badge">🌿</div>
+                            <div class="dish-name">Lamb Cochinita-style</div>
+                            <div class="dish-description">Slow-cooked lamb in achiote, pickled red onions and habanero
+                                oil.</div>
+                            <button class="select-btn"
+                                onclick="toggleDishSelection(this, 'Lamb Cochinita-style - Wednesday Dinner', 780, 0)">Select
+                                this Dish</button>
+                        </div>
+
+                        <div class="dish-card" data-dish="wednesday-dinner-menu">
+                            <div class="dish-name">Wednesday Dinner Experience</div>
+                            <div class="dish-description">Starter: Lime soup with avocado · Sides: Black beans with
+                                epazote · Dessert: Marquesita with Nutella</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Thursday Dinner -->
+                <div id="dinner-thursday" class="dinner-day hidden">
+                    <div class="dishes-grid">
+                        <div class="dish-card special-highlight" data-dish="beef-chile-nogada" data-calories="920">
+                            <div class="calorie-badge">920 cal</div>
+                            <div class="special-badge">🧀</div>
+                            <div class="dish-name">Beef with Chile en Nogada</div>
+                            <div class="dish-description">Prime beef with stuffed poblano, walnut sauce and pomegranate
+                                — patriotic elegance.</div>
+                            <button class="select-btn"
+                                onclick="toggleDishSelection(this, 'Beef with Chile en Nogada - Thursday Dinner', 920, 0)">Select
+                                this Dish</button>
+                        </div>
+
+                        <div class="dish-card" data-dish="thursday-dinner-menu">
+                            <div class="dish-name">Thursday Dinner Experience</div>
+                            <div class="dish-description">Starter: Toreados chiles with mezcal · Sides: Saffron rice ·
+                                Dessert: Tres leches · Drink: Pulque with fruit</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Friday Dinner -->
+                <div id="dinner-friday" class="dinner-day hidden">
+                    <div class="dishes-grid">
+                        <div class="dish-card special-highlight" data-dish="fish-veracruz" data-calories="680">
+                            <div class="calorie-badge">680 cal</div>
+                            <div class="special-badge">🎉</div>
+                            <div class="dish-name">Red Snapper Veracruz-style</div>
+                            <div class="dish-description">Whole red snapper with tomatoes, olives, capers, gueros and
+                                white wine.</div>
+                            <button class="select-btn"
+                                onclick="toggleDishSelection(this, 'Red Snapper Veracruz-style - Friday Dinner', 680, 0)">Select
+                                this Dish</button>
+                        </div>
+
+                        <div class="dish-card" data-dish="friday-dinner-menu">
+                            <div class="dish-name">Friday Dinner Experience</div>
+                            <div class="dish-description">Starter: Shrimp cocktail · Sides: Coconut rice & plantain ·
+                                Dessert: Coconut flan · Drink: Hibiscus water</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Saturday Dinner -->
+                <div id="dinner-saturday" class="dinner-day hidden">
+                    <div class="dishes-grid">
+                        <div class="dish-card special-highlight" data-dish="pork-adobo" data-calories="840">
+                            <div class="calorie-badge">840 cal</div>
+                            <div class="special-badge">🥞</div>
+                            <div class="dish-name">Pork Adobo</div>
+                            <div class="dish-description">Slow-braised pork shoulder in guajillo & ancho adobo with
+                                sweet potato and pickles.</div>
+                            <button class="select-btn"
+                                onclick="toggleDishSelection(this, 'Pork Adobo - Saturday Dinner', 840, 0)">Select this
+                                Dish</button>
+                        </div>
+
+                        <div class="dish-card" data-dish="saturday-dinner-menu">
+                            <div class="dish-name">Saturday Dinner Experience</div>
+                            <div class="dish-description">Starter: Tamales with mole · Sides: Quelites with onion ·
+                                Dessert: Buñuelos with piloncillo syrup</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sunday Dinner -->
+                <div id="dinner-sunday" class="dinner-day hidden">
+                    <div class="dishes-grid">
+                        <div class="dish-card special-highlight" data-dish="chicken-mole-poblano" data-calories="760">
+                            <div class="calorie-badge">760 cal</div>
+                            <div class="special-badge">👑</div>
+                            <div class="dish-name">Chicken in Mole Poblano</div>
+                            <div class="dish-description">Free-range chicken with traditional mole poblano, toasted
+                                sesame and Mexican rice.</div>
+                            <button class="select-btn"
+                                onclick="toggleDishSelection(this, 'Chicken in Mole Poblano - Sunday Dinner', 760, 0)">Select
+                                this Dish</button>
+                        </div>
+
+                        <div class="dish-card" data-dish="sunday-dinner-menu">
+                            <div class="dish-name">Sunday Dinner Experience</div>
+                            <div class="dish-description">Starter: Aztec soup with avocado · Sides: Refried beans with
+                                cheese · Dessert: Chongos zamoranos</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Allergies -->
+            <section id="allergies" class="section-content hidden">
+                <h2 class="meal-title font-playfair">⚠️ Allergy Information</h2>
+                <p style="color:#64748b; max-width:900px;">Your safety is our priority. Please inform our staff of any
+                    allergies or dietary restrictions. We can adapt many dishes to meet your needs.</p>
+
+                <div
+                    style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:1rem; margin-top:1rem;">
+                    <div class="dish-card">
+                        <h3 style="font-weight:700; margin-bottom:.5rem;">🚨 Common Allergens</h3>
+                        <div style="display:grid; gap:.5rem;">
+                            <div
+                                style="display:flex; justify-content:space-between; background:#fff7f7; padding:.5rem; border-radius:8px;">
+                                <span>Gluten</span><span
+                                    style="background:#fee2e2; color:#b91c1c; padding:.2rem .5rem; border-radius:999px; font-size:.8rem;">Breads
+                                    & pastas</span></div>
+                            <div
+                                style="display:flex; justify-content:space-between; background:#fff7f7; padding:.5rem; border-radius:8px;">
+                                <span>Dairy</span><span
+                                    style="background:#fee2e2; color:#b91c1c; padding:.2rem .5rem; border-radius:999px; font-size:.8rem;">Cheeses
+                                    & butter</span></div>
+                            <div
+                                style="display:flex; justify-content:space-between; background:#fff7f7; padding:.5rem; border-radius:8px;">
+                                <span>Egg</span><span
+                                    style="background:#fee2e2; color:#b91c1c; padding:.2rem .5rem; border-radius:999px; font-size:.8rem;">Sauces
+                                    & desserts</span></div>
+                            <div
+                                style="display:flex; justify-content:space-between; background:#fff7f7; padding:.5rem; border-radius:8px;">
+                                <span>Shellfish</span><span
+                                    style="background:#fee2e2; color:#b91c1c; padding:.2rem .5rem; border-radius:999px; font-size:.8rem;">Fish
+                                    & crustaceans</span></div>
+                            <div
+                                style="display:flex; justify-content:space-between; background:#fff7f7; padding:.5rem; border-radius:8px;">
+                                <span>Tree Nuts</span><span
+                                    style="background:#fee2e2; color:#b91c1c; padding:.2rem .5rem; border-radius:999px; font-size:.8rem;">Nuts
+                                    & almonds</span></div>
+                        </div>
+                    </div>
+
+                    <div class="dish-card">
+                        <h3 style="font-weight:700; margin-bottom:.5rem;">✅ Special Options Available</h3>
+                        <div style="display:grid; gap:.75rem;">
+                            <div
+                                style="background:#ecfdf5; padding:.75rem; border-radius:8px; border:1px solid #dcfce7;">
+                                <strong>Gluten-free</strong>
+                                <div style="color:#065f46; font-size:.95rem;">Alternative breads & pastas available
+                                </div>
+                            </div>
+                            <div
+                                style="background:#ecfdf5; padding:.75rem; border-radius:8px; border:1px solid #dcfce7;">
+                                <strong>Vegan</strong>
+                                <div style="color:#065f46; font-size:.95rem;">Full plant-based menu options</div>
+                            </div>
+                            <div
+                                style="background:#ecfdf5; padding:.75rem; border-radius:8px; border:1px solid #dcfce7;">
+                                <strong>Vegetarian</strong>
+                                <div style="color:#065f46; font-size:.95rem;">Meat-free choices in every course</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="dish-card" style="grid-column: 1 / -1; background:#fffaf0; border:1px solid #fde68a;">
+                        <h3 style="font-weight:700; margin-bottom:.5rem;">📞 Immediate Contact</h3>
+                        <p style="color:#92400e;">For severe allergies, contact Chef Franko directly before your visit.
+                            We will adapt any dish to accommodate serious needs whenever possible.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Order -->
+            <section id="order" class="section-content hidden">
+                <h2 class="meal-title font-playfair">📋 My Order</h2>
+                <p style="color:#64748b;">Review your selected dishes and complete your order. Chef Franko will prepare
+                    everything with care.</p>
+
+                <div id="orderSummary" style="margin-top:1rem;">
+                    <div class="dish-card">
+                        <h3 style="font-weight:700; margin-bottom:.5rem;">🛒 Selected Dishes</h3>
+                        <div id="selectedDishes">
+                            <p style="color:#94a3b8; text-align:center; padding:2rem 0;">You haven't selected any dishes
+                                yet. Explore the menu and pick your favorites!</p>
+                        </div>
+
+                        <div id="orderTotal" class="hidden"
+                            style="border-top:1px solid #eef2f6; padding-top:1rem; margin-top:1rem;">
+                            <div style="display:flex; justify-content:space-between; font-weight:700; font-size:1rem;">
+                                <span>Total Dishes:</span><span id="totalAmount">0</span>
+                            </div>
+                            <div style="display:flex; justify-content:space-between; color:#64748b; margin-top:.5rem;">
+                                <span>Total Calories:</span><span id="totalCalories">0 cal</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="orderForm" class="order-form hidden">
+                    <h3 style="font-weight:700; margin-bottom:.5rem;">📝 Order Details</h3>
+                    <form id="completeOrderForm" action="https://formspree.io/f/mblajkrl" method="POST">
+                        <input type="hidden" name="selected_dishes" id="selectedDishesInput" />
+                        <input type="hidden" name="total_dishes" id="totalAmountInput" />
+                        <input type="hidden" name="total_calories" id="totalCaloriesInput" />
+
+                        <div
+                            style="display:grid; gap:0.75rem; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+                            <div>
+                                <label for="guestName"
+                                    style="display:block; font-weight:700; margin-bottom:.25rem;">Guest Name *</label>
+                                <input id="guestName" name="guest_name" type="text" required
+                                    style="width:100%; padding:.6rem; border-radius:8px; border:1px solid #e6eef6;"
+                                    placeholder="Your full name" />
+                            </div>
+
+                            <div>
+                                <label for="roomNumber"
+                                    style="display:block; font-weight:700; margin-bottom:.25rem;">Room Number *</label>
+                                <input id="roomNumber" name="room_number" type="text" required
+                                    style="width:100%; padding:.6rem; border-radius:8px; border:1px solid #e6eef6;"
+                                    placeholder="Room #" />
+                            </div>
+                        </div>
+
+                        <div style="margin-top:.75rem;">
+                            <label for="mealTime"
+                                style="display:block; font-weight:700; margin-bottom:.25rem;">Preferred Meal Time
+                                *</label>
+                            <select id="mealTime" name="meal_time" required
+                                style="width:100%; padding:.6rem; border-radius:8px; border:1px solid #e6eef6;">
+                                <option value="">Select preferred time</option>
+                                <option value="breakfast-8am">Breakfast - 8:00 AM</option>
+                                <option value="breakfast-9am">Breakfast - 9:00 AM</option>
+                                <option value="breakfast-10am">Breakfast - 10:00 AM</option>
+                                <option value="lunch-12pm">Lunch - 12:00 PM</option>
+                                <option value="lunch-1pm">Lunch - 1:00 PM</option>
+                                <option value="lunch-2pm">Lunch - 2:00 PM</option>
+                                <option value="dinner-7pm">Dinner - 7:00 PM</option>
+                                <option value="dinner-8pm">Dinner - 8:00 PM</option>
+                                <option value="dinner-9pm">Dinner - 9:00 PM</option>
+                            </select>
+                        </div>
+
+                        <div style="margin-top:.75rem;">
+                            <label for="specialRequests"
+                                style="display:block; font-weight:700; margin-bottom:.25rem;">Special Requests or
+                                Allergies</label>
+                            <textarea id="specialRequests" name="special_requests" rows="3"
+                                style="width:100%; padding:.6rem; border-radius:8px; border:1px solid #e6eef6;"
+                                placeholder="Any dietary requirements, allergies or preferences..."></textarea>
+                        </div>
+
+                        <div style="margin-top:.75rem;">
+                            <button type="submit" class="submit-order-btn">🍽️ Send Order to Chef Franko</button>
+                        </div>
+                    </form>
+
+                    <div id="orderConfirmation" class="success-message hidden" style="margin-top:.75rem;">
+                        <h4 style="font-weight:800; margin-bottom:.5rem;">🎉 Order Confirmed!</h4>
+                        <p>Thank you — your order has been sent to Chef Franko. You'll receive a confirmation soon with
+                            preparation details.</p>
+                        <p style="font-size:.9rem; margin-top:.5rem;">Order ID: <strong id="orderIdDisplay"></strong>
+                        </p>
+                    </div>
+                </div>
+
+                <div
+                    style="margin-top:1rem; background:linear-gradient(135deg,#fff7ed 0%, #fff1d6 100%); padding:1rem; border-radius:12px; border:1px solid #fde68a;">
+                    <strong>📞 Direct Contact - Chef Franko</strong>
+                    <div style="display:flex; gap:1rem; margin-top:.5rem; align-items:center;">
+                        <div>📱 WhatsApp / Phone</div>
+                        <div style="font-weight:700; color:#92400e">+52 322 1606843</div>
+                    </div>
+                    <div style="margin-top:.5rem; color:#92400e;">Available daily 7:00 AM - 10:00 PM</div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Floating Cart Summary -->
+        <div id="floatingCart" class="cart-summary hidden" aria-live="polite">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:.5rem;">
+                <div style="font-weight:800;">🛒 Your Order</div>
+                <div id="cartClose" style="cursor:pointer; font-size:1rem; color:#ef4444;"
+                    onclick="document.getElementById('floatingCart').classList.add('hidden')">✕</div>
+            </div>
+            <div id="cartItems" style="max-height:220px; overflow:auto; margin-bottom:.5rem;"></div>
+            <div
+                style="border-top:1px solid #eef2f6; padding-top:.5rem; display:flex; justify-content:space-between; font-weight:700;">
+                <div>Total Dishes:</div>
+                <div id="cartTotal">0</div>
+            </div>
+            <div style="display:flex; justify-content:space-between; color:#64748b; margin-top:.25rem;">
+                <div>Calories:</div>
+                <div id="cartCalories">0 cal</div>
+            </div>
+            <div style="margin-top:.65rem;">
+                <button class="submit-order-btn"
+                    onclick="showSection('order', document.querySelector('.nav-btn[onclick*=\" order\"]'))">Review
+                    Order</button>
+            </div>
+        </div>
+
+        <footer>
+            <div>© 2025 Verano Estate - Chef Franko</div>
+            <div style="font-size:.9rem; color:#94a3b8">An unforgettable culinary experience in every dish</div>
+        </footer>
+    </div>
+    <script> // Core order state let selectedDishes = []; let totalCalories = 0; // Section navigation function showSection(sectionId, button) { document.querySelectorAll('.section-content').forEach(s => s.classList.add('hidden')); document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active')); const el = document.getElementById(sectionId); if (el) el.classList.remove('hidden'); if (button) button.classList.add('active'); window.scrollTo({ top: 0, behavior: 'smooth' }); } // Day selectors for each meal function showBreakfastDay(day, button) { document.querySelectorAll('.breakfast-day').forEach(d => d.classList.add('hidden')); document.querySelectorAll('#breakfast .day-btn').forEach(b => b.classList.remove('active')); const el = document.getElementById('breakfast-' + day); if (el) el.classList.remove('hidden'); if (button) button.classList.add('active'); } function showLunchDay(day, button) { document.querySelectorAll('.lunch-day').forEach(d => d.classList.add('hidden')); document.querySelectorAll('#lunch .day-btn').forEach(b => b.classList.remove('active')); const el = document.getElementById('lunch-' + day); if (el) el.classList.remove('hidden'); if (button) button.classList.add('active'); } function showDinnerDay(day, button) { document.querySelectorAll('.dinner-day').forEach(d => d.classList.add('hidden')); document.querySelectorAll('#dinner .day-btn').forEach(b => b.classList.remove('active')); const el = document.getElementById('dinner-' + day); if (el) el.classList.remove('hidden'); if (button) button.classList.add('active'); } // Add / remove selections function toggleDishSelection(button, dishName, calories, price) { const card = button.closest('.dish-card'); if (!card) return; const base = (card.dataset.dish || dishName).toString().toLowerCase().replace(/\s+/g,'-').replace(/[^\w-]/g,''); const context = (dishName.split(' - ')[1] || '').toLowerCase().replace(/\s+/g,'-').replace(/[^\w-]/g,''); const id = context ? base + '-' + context : base; const idx = selectedDishes.findIndex(d => d.id === id); if (idx > -1) { // remove const removed = selectedDishes.splice(idx,1)[0]; card.classList.remove('selected'); button.classList.remove('selected'); button.textContent = 'Select this Dish'; totalCalories -= removed.calories; } else { // add selectedDishes.push({ id, name: dishName, calories, price: 0 }); card.classList.add('selected'); button.classList.add('selected'); button.textContent = '✓ Selected'; totalCalories += calories; } updateCartDisplay(); updateOrderSummary(); } function updateCartDisplay() { const floating = document.getElementById('floatingCart'); const itemsEl = document.getElementById('cartItems'); const totalEl = document.getElementById('cartTotal'); const calEl = document.getElementById('cartCalories'); if (selectedDishes.length === 0) { floating.classList.add('hidden'); itemsEl.innerHTML = ''; totalEl.textContent = '0'; calEl.textContent = '0 cal'; return; } floating.classList.remove('hidden'); itemsEl.innerHTML = selectedDishes.map(d => ` <div class="cart-item"> <div> <div style="font-weight:700;">${escapeHtml(d.name)}</div> <div style="font-size:.85rem; color:#64748b;">${d.calories} cal</div> </div> </div> `).join(''); totalEl.textContent = String(selectedDishes.length); calEl.textContent = `${totalCalories} cal`; } function updateOrderSummary() { const selectedEl = document.getElementById('selectedDishes'); const orderTotal = document.getElementById('orderTotal'); const orderForm = document.getElementById('orderForm'); const totalAmountSpan = document.getElementById('totalAmount'); const totalCaloriesSpan = document.getElementById('totalCalories'); if (selectedDishes.length === 0) { selectedEl.innerHTML = '<p style="color:#94a3b8; text-align:center; padding:2rem 0;">You haven\'t selected any dishes yet. Explore the menu and choose your favorites!</p>'; orderTotal.classList.add('hidden'); orderForm.classList.add('hidden'); return; } selectedEl.innerHTML = selectedDishes.map(d => ` <div style="display:flex; justify-content:space-between; align-items:center; padding:.6rem 0; border-bottom:1px solid #eef2f6;"> <div> <div style="font-weight:700;">${escapeHtml(d.name)}</div> <div style="color:#64748b; font-size:.9rem;">${d.calories} calories</div> </div> <div> <button style="background:none; border:none; color:#ef4444; cursor:pointer; font-weight:700;" onclick="removeDishFromOrder('${d.id}')">Remove</button> </div> </div> `).join(''); orderTotal.classList.remove('hidden'); orderForm.classList.remove('hidden'); totalAmountSpan.textContent = String(selectedDishes.length); totalCaloriesSpan.textContent = `${totalCalories} cal`; document.getElementById('selectedDishesInput').value = selectedDishes.map(d => d.name).join('; '); document.getElementById('totalAmountInput').value = String(selectedDishes.length); document.getElementById('totalCaloriesInput').value = String(totalCalories); } function removeDishFromOrder(dishId) { const idx = selectedDishes.findIndex(d => d.id === dishId); if (idx === -1) return; const dish = selectedDishes[idx]; totalCalories -= dish.calories; selectedDishes.splice(idx,1); // Try to find the original card and update UI document.querySelectorAll(`[data-dish]`).forEach(card => { const base = (card.dataset.dish || '').toLowerCase(); if (dishId.startsWith(base)) { card.classList.remove('selected'); const btn = card.querySelector('.select-btn'); if (btn) { btn.classList.remove('selected'); btn.textContent = 'Select this Dish'; } } }); updateCartDisplay(); updateOrderSummary(); } // Form submission (Formspree) document.getElementById('completeOrderForm').addEventListener('submit', function(e){ e.preventDefault(); if (selectedDishes.length === 0) { alert('Please select at least one dish before sending the order.'); return; } const orderId = 'VE' + Date.now().toString().slice(-6); document.getElementById('orderIdDisplay').textContent = orderId; document.getElementById('orderConfirmation').classList.remove('hidden'); this.style.display = 'none'; const formData = new FormData(this); formData.set('selected_dishes', selectedDishes.map(d => d.name).join('; ')); formData.set('total_dishes', String(selectedDishes.length)); formData.set('total_calories', String(totalCalories)); formData.set('_subject', `New Menu Order - Room ${formData.get('room_number') || 'N/A'} - ${formData.get('guest_name') || 'Guest'}`); fetch(this.action, { method: 'POST', body: formData, headers: { 'Accept': 'application/json' } }).then(response => { if (response.ok) { console.log('Order submitted to Formspree'); } else { response.json().then(data => { if (Object.hasOwn(data, 'errors')) { alert(data.errors.map(err => err.message).join(', ')); } else { alert('There was a problem submitting the order. Please contact Chef Franko directly.'); } document.getElementById('orderConfirmation').classList.add('hidden'); document.getElementById('completeOrderForm').style.display = 'block'; }).catch(() => { alert('Unexpected response processing error.'); document.getElementById('orderConfirmation').classList.add('hidden'); document.getElementById('completeOrderForm').style.display = 'block'; }); } }).catch(err => { console.error('Submission error:', err); alert('A technical issue prevented order submission. Please contact Chef Franko directly.'); document.getElementById('orderConfirmation').classList.add('hidden'); document.getElementById('completeOrderForm').style.display = 'block'; }); // Reset UI after 10s setTimeout(() => { selectedDishes = []; totalCalories = 0; document.querySelectorAll('.dish-card.selected').forEach(card => { card.classList.remove('selected'); const btn = card.querySelector('.select-btn.selected'); if (btn) { btn.classList.remove('selected'); btn.textContent = 'Select this Dish'; } }); updateCartDisplay(); updateOrderSummary(); document.getElementById('orderConfirmation').classList.add('hidden'); const formEl = document.getElementById('completeOrderForm'); formEl.reset(); formEl.style.display = 'block'; showSection('breakfast', document.querySelector('.nav-btn[onclick*="breakfast"]')); showBreakfastDay('monday', document.querySelector('#breakfast .day-btn')); }, 10000); }); // Utility to escape HTML when inserting user-visible strings function escapeHtml(str) { return String(str) .replaceAll('&','&amp;') .replaceAll('<','&lt;') .replaceAll('>','&gt;') .replaceAll('"','&quot;') .replaceAll("'", '&#39;'); } // Initialize default view document.addEventListener('DOMContentLoaded', function(){ showSection('breakfast', document.querySelector('.nav-btn[onclick*="breakfast"]')); showBreakfastDay('monday', document.querySelector('#breakfast .day-btn')); // initialize lunch/dinner default buttons if present const lunchBtn = document.querySelector('#lunch .day-btn'); if (lunchBtn) showLunchDay('monday', lunchBtn); const dinnerBtn = document.querySelector('#dinner .day-btn'); if (dinnerBtn) showDinnerDay('monday', dinnerBtn); }); </script>
+</body>
+
+</html>

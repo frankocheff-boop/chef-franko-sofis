@@ -1,0 +1,1186 @@
+import React, { useState, useEffect } from 'react';
+import { initializeApp } from 'firebase/app';
+import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from 'firebase/auth';
+import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, onSnapshot, collection, query } from 'firebase/firestore';
+import { User, Calendar, Home, Users, Heart, Phone, FileText, CheckCircle, PlusCircle, Trash2, Loader2, Mail, MessageSquare } from 'lucide-react'; // Added Mail and MessageSquare icons
+
+// Global variables provided by the Canvas environment
+const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+// Main App Component
+const App = () => {
+  // State for Firebase and user authentication
+  const [db, setDb] = useState(null);
+  const [auth, setAuth] = useState(null);
+  const [userId, setUserId] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [authReady, setAuthReady] = useState(false);
+  const [message, setMessage] = useState({ type: '', text: '' });
+
+  // State for guest form data
+  const [guestData, setGuestData] = useState({
+    firstName: '',
+    lastNameP: '',
+    lastNameM: '',
+    dob: '',
+    nationality: '',
+    countryOfResidence: '',
+    idType: '',
+    idNumber: '',
+    idIssuerCountry: '',
+    email: '',
+    phone: '',
+    addressStreet: '',
+    addressColony: '',
+    addressCity: '',
+    addressState: '',
+    addressZip: '',
+    checkInDate: '',
+    checkInTime: '',
+    checkOutDate: '',
+    numNights: '',
+    adults: '',
+    children: '',
+    babies: '',
+    visitPurpose: '',
+    visitPurposeOther: '',
+    howFound: '',
+    howFoundOther: '',
+    transportNeeded: false,
+    transportDetails: '',
+    dietaryRestrictions: false,
+    dietaryDetails: '',
+    allergies: false,
+    allergyDetails: '',
+    extraBedCrib: '',
+    extraBedCribDetails: { cribs: 0, extraBeds: 0 },
+    accessibilityNeeds: false,
+    accessibilityDetails: '',
+    pets: false,
+    petDetails: '',
+    tempPreference: '',
+    specialRequests: '',
+    emergencyContactName: '',
+    emergencyContactRelation: '',
+    emergencyContactPhone: '',
+    emergencyContactEmail: '',
+    termsAccepted: false,
+  });
+
+  // State for additional guests
+  const [additionalGuests, setAdditionalGuests] = useState([
+    { id: 1, name: '', dob: '', nationality: '', relation: '' },
+  ]);
+
+  // State for room assignments, initialized with sample data
+  const [roomAssignments, setRoomAssignments] = useState([]);
+
+  // New state for LLM features
+  const [welcomeMessage, setWelcomeMessage] = useState('');
+  const [summaryOfPreferences, setSummaryOfPreferences] = useState('');
+  const [thankYouEmail, setThankYouEmail] = useState(''); // New state for thank you email
+  const [specialRequestResponse, setSpecialRequestResponse] = useState(''); // New state for special request response
+
+  const [isGeneratingWelcome, setIsGeneratingWelcome] = useState(false);
+  const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
+  const [isGeneratingThankYou, setIsGeneratingThankYou] = useState(false); // New loading state
+  const [isGeneratingResponse, setIsGeneratingResponse] = useState(false); // New loading state
+
+  // Initialize Firebase and handle authentication
+  useEffect(() => {
+    const app = initializeApp(firebaseConfig);
+    const firestore = getFirestore(app);
+    const authentication = getAuth(app);
+
+    setDb(firestore);
+    setAuth(authentication);
+
+    // Listen for auth state changes
+    const unsubscribe = onAuthStateChanged(authentication, async (user) => {
+      if (user) {
+        setUserId(user.uid);
+        setAuthReady(true);
+        setLoading(false);
+      } else {
+        // Sign in anonymously if no initial token or user
+        try {
+          if (initialAuthToken) {
+            await signInWithCustomToken(authentication, initialAuthToken);
+          } else {
+            await signInAnonymously(authentication);
+          }
+        } catch (error) {
+          console.error("Firebase authentication error:", error);
+          setMessage({ type: 'error', text: 'Authentication failed. Please try again.' });
+          setLoading(false);
+        }
+      }
+    });
+
+    return () => unsubscribe(); // Cleanup auth listener
+  }, []); // Run only once on component mount
+
+  // Fetch room assignments from Firestore when auth is ready
+  useEffect(() => {
+    if (db && authReady && userId) {
+      const roomAssignmentsRef = collection(db, `artifacts/${appId}/users/${userId}/roomAssignments`);
+      const q = query(roomAssignmentsRef);
+
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        const assignmentsData = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        setRoomAssignments(assignmentsData);
+      }, (error) => {
+        console.error("Error fetching room assignments:", error);
+        setMessage({ type: 'error', text: 'Error loading room assignments.' });
+      });
+
+      return () => unsubscribe(); // Cleanup snapshot listener
+    }
+  }, [db, authReady, userId]);
+
+  // Handle changes in guest form fields
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setGuestData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value,
+    }));
+  };
+
+  // Handle changes for additional guests fields
+  const handleAdditionalGuestChange = (index, e) => {
+    const { name, value } = e.target;
+    const list = [...additionalGuests];
+    list[index][name] = value;
+    setAdditionalGuests(list);
+  };
+
+  // Handle changes for extra bed/crib details
+  const handleExtraBedCribChange = (e) => {
+    const { name, value } = e.target;
+    setGuestData(prev => ({
+      ...prev,
+      extraBedCribDetails: {
+        ...prev.extraBedCribDetails,
+        [name]: parseInt(value) || 0,
+      },
+    }));
+  };
+
+  // Add a new additional guest row
+  const addAdditionalGuest = () => {
+    setAdditionalGuests(prev => [...prev, { id: prev.length + 1, name: '', dob: '', nationality: '', relation: '' }]);
+  };
+
+  // Remove an additional guest row
+  const removeAdditionalGuest = (idToRemove) => {
+    setAdditionalGuests(prev => prev.filter(guest => guest.id !== idToRemove));
+  };
+
+  // Handle changes in room assignment table cells and save to Firestore
+  const handleRoomAssignmentChange = async (index, e) => {
+    const { name, value } = e.target;
+    const list = [...roomAssignments];
+    list[index][name] = value;
+    setRoomAssignments(list); // Update local state immediately for responsiveness
+
+    if (db && userId) {
+      try {
+        const docRef = doc(db, `artifacts/${appId}/users/${userId}/roomAssignments`, list[index].id);
+        await updateDoc(docRef, { [name]: value });
+        setMessage({ type: 'success', text: 'Room assignment updated successfully!' });
+      } catch (error) {
+        console.error("Error updating room assignment:", error);
+        setMessage({ type: 'error', text: 'Error updating room assignment.' });
+      }
+    }
+  };
+
+  // Handle form submission and save guest data to Firestore
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!db || !authReady) {
+      setMessage({ type: 'error', text: 'Application not ready. Please wait.' });
+      return;
+    }
+
+    try {
+      // Save guest form data to a public collection
+      const guestFormsRef = collection(db, `artifacts/${appId}/public/data/guestForms`);
+      await addDoc(guestFormsRef, {
+        ...guestData,
+        additionalGuests: additionalGuests,
+        submissionDate: new Date(),
+        submittedBy: userId, // Record who submitted it (even if anonymous)
+      });
+      setMessage({ type: 'success', text: 'Guest form submitted successfully!' });
+      // Optionally reset form after submission
+      // setGuestData(...)
+      // setAdditionalGuests(...)
+    } catch (error) {
+      console.error("Error submitting guest form:", error);
+      setMessage({ type: 'error', text: 'Error submitting guest form. Please try again.' });
+    }
+  };
+
+  // Function to generate personalized welcome message using Gemini API
+  const generateWelcomeMessage = async () => {
+      setIsGeneratingWelcome(true);
+      setMessage({ type: '', text: '' }); // Clear previous messages
+
+      const prompt = `Generate a warm and personalized welcome message for a villa guest based on the following details. Keep it concise and friendly.
+      Guest Name: ${guestData.firstName} ${guestData.lastNameP}
+      Arrival Date: ${guestData.checkInDate}
+      Departure Date: ${guestData.checkOutDate}
+      Purpose of Visit: ${guestData.visitPurpose}
+      Dietary Restrictions: ${guestData.dietaryRestrictions ? guestData.dietaryDetails : 'None'}
+      Special Requests: ${guestData.specialRequests || 'None'}
+      Traveling with Pets: ${guestData.pets ? guestData.petDetails : 'No'}
+
+      If they are traveling with pets, include a friendly reminder about checking the villa's pet policy.
+      Start with "Dear [Guest Name],"`;
+
+      let chatHistory = [];
+      chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+      const payload = { contents: chatHistory };
+      const apiKey = ""; // Canvas will provide this at runtime
+      const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+      try {
+          const response = await fetch(apiUrl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload)
+          });
+          const result = await response.json();
+
+          if (result.candidates && result.candidates.length > 0 &&
+              result.candidates[0].content && result.candidates[0].content.parts &&
+              result.candidates[0].content.parts.length > 0) {
+              const text = result.candidates[0].content.parts[0].text;
+              setWelcomeMessage(text);
+              setMessage({ type: 'success', text: 'Welcome message generated!' });
+          } else {
+              setMessage({ type: 'error', text: 'Failed to generate welcome message. No content received.' });
+              console.error("Gemini API response structure unexpected:", result);
+          }
+      } catch (error) {
+          console.error("Error calling Gemini API for welcome message:", error);
+          setMessage({ type: 'error', text: 'Error generating welcome message. Please check console.' });
+      } finally {
+          setIsGeneratingWelcome(false);
+      }
+  };
+
+  // Function to summarize guest preferences using Gemini API
+  const summarizeGuestPreferences = async () => {
+      setIsGeneratingSummary(true);
+      setMessage({ type: '', text: '' }); // Clear previous messages
+
+      const prompt = `Summarize the key preferences and needs for a villa guest based on the following details. Focus on actionable items for staff.
+      Guest Name: ${guestData.firstName} ${guestData.lastNameP}
+      Arrival Date: ${guestData.checkInDate}
+      Departure Date: ${guestData.checkOutDate}
+      Purpose of Visit: ${guestData.visitPurpose}
+      Dietary Restrictions: ${guestData.dietaryRestrictions ? guestData.dietaryDetails : 'None'}
+      Allergies (non-food): ${guestData.allergies ? guestData.allergyDetails : 'None'}
+      Extra Bed/Crib Needs: ${guestData.extraBedCrib === 'Crib' ? `${guestData.extraBedCribDetails.cribs} crib(s)` : guestData.extraBedCrib === 'Extra Bed' ? `${guestData.extraBedCribDetails.extraBeds} extra bed(s)` : 'None'}
+      Accessibility Needs: ${guestData.accessibilityNeeds ? guestData.accessibilityDetails : 'None'}
+      Traveling with Pets: ${guestData.pets ? guestData.petDetails : 'No'}
+      Villa Temperature Preference: ${guestData.tempPreference || 'No preference'}
+      Other Special Requests: ${guestData.specialRequests || 'None'}
+
+      Provide a concise summary of 3-5 bullet points.`;
+
+      let chatHistory = [];
+      chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+      const payload = { contents: chatHistory };
+      const apiKey = ""; // Canvas will provide this at runtime
+      const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+      try {
+          const response = await fetch(apiUrl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload)
+          });
+          const result = await response.json();
+
+          if (result.candidates && result.candidates.length > 0 &&
+              result.candidates[0].content && result.candidates[0].content.parts &&
+              result.candidates[0].content.parts.length > 0) {
+              const text = result.candidates[0].content.parts[0].text;
+              setSummaryOfPreferences(text);
+              setMessage({ type: 'success', text: 'Guest preferences summarized!' });
+          } else {
+              setMessage({ type: 'error', text: 'Failed to summarize preferences. No content received.' });
+              console.error("Gemini API response structure unexpected:", result);
+          }
+      } catch (error) {
+          console.error("Error calling Gemini API for summary:", error);
+          setMessage({ type: 'error', text: 'Error summarizing preferences. Please check console.' });
+      } finally {
+          setIsGeneratingSummary(false);
+      }
+  };
+
+  // Function to generate a thank you email using Gemini API
+  const generateThankYouEmail = async () => {
+    setIsGeneratingThankYou(true);
+    setMessage({ type: '', text: '' }); // Clear previous messages
+
+    const prompt = `Draft a polite and warm thank you email to a villa guest after their stay.
+    Include the guest's name, mention their stay dates, and briefly reference their purpose of visit or any special preferences if applicable.
+    Encourage them to visit again.
+    Guest Name: ${guestData.firstName} ${guestData.lastNameP}
+    Check-out Date: ${guestData.checkOutDate}
+    Purpose of Visit: ${guestData.visitPurpose}
+    Special Requests: ${guestData.specialRequests || 'None'}
+    Traveling with Pets: ${guestData.pets ? 'Yes, with ' + guestData.petDetails : 'No'}
+
+    Start with "Subject: Thank You for Your Stay at [Villa Name]!"
+    Then "Dear [Guest Name],"`;
+
+    let chatHistory = [];
+    chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+    const payload = { contents: chatHistory };
+    const apiKey = "";
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+    try {
+        const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        const result = await response.json();
+
+        if (result.candidates && result.candidates.length > 0 &&
+            result.candidates[0].content && result.candidates[0].content.parts &&
+            result.candidates[0].content.parts.length > 0) {
+            const text = result.candidates[0].content.parts[0].text;
+            setThankYouEmail(text);
+            setMessage({ type: 'success', text: 'Thank you email generated!' });
+        } else {
+            setMessage({ type: 'error', text: 'Failed to generate thank you email. No content received.' });
+            console.error("Gemini API response structure unexpected:", result);
+        }
+    } catch (error) {
+        console.error("Error calling Gemini API for thank you email:", error);
+        setMessage({ type: 'error', text: 'Error generating thank you email. Please check console.' });
+    } finally {
+        setIsGeneratingThankYou(false);
+    }
+  };
+
+  // Function to draft a response to a special request using Gemini API
+  const draftSpecialRequestResponse = async () => {
+    setIsGeneratingResponse(true);
+    setMessage({ type: '', text: '' }); // Clear previous messages
+
+    const prompt = `Draft a polite response to a guest's special request.
+    The guest is ${guestData.firstName} ${guestData.lastNameP}.
+    Their special request is: "${guestData.specialRequests}".
+
+    Please provide a draft response that:
+    1. Acknowledges the request.
+    2. States whether it can be accommodated (make a reasonable assumption if not explicitly stated, e.g., "we will do our best" or "we can accommodate").
+    3. If not fully accommodated, suggest a reasonable alternative.
+    4. Maintain a helpful and welcoming tone.
+    Start with "Dear ${guestData.firstName},"`;
+
+    let chatHistory = [];
+    chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+    const payload = { contents: chatHistory };
+    const apiKey = "";
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+    try {
+        const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        const result = await response.json();
+
+        if (result.candidates && result.candidates.length > 0 &&
+            result.candidates[0].content && result.candidates[0].content.parts &&
+            result.candidates[0].content.parts.length > 0) {
+            const text = result.candidates[0].content.parts[0].text;
+            setSpecialRequestResponse(text);
+            setMessage({ type: 'success', text: 'Response drafted!' });
+        } else {
+            setMessage({ type: 'error', text: 'Failed to draft response. No content received.' });
+            console.error("Gemini API response structure unexpected:", result);
+        }
+    } catch (error) {
+        console.error("Error calling Gemini API for response draft:", error);
+        setMessage({ type: 'error', text: 'Error drafting response. Please check console.' });
+    } finally {
+        setIsGeneratingResponse(false);
+    }
+  };
+
+
+  // Render loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 font-inter text-gray-800">
+        <div className="flex flex-col items-center p-8 bg-white rounded-lg shadow-xl">
+          <Loader2 className="animate-spin text-indigo-500 mb-4" size={48} />
+          <p className="text-xl font-semibold text-indigo-700">Loading application...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4 sm:p-8 font-inter text-gray-800">
+      <div className="max-w-6xl mx-auto bg-white shadow-2xl rounded-xl p-6 sm:p-10 border border-blue-200">
+        <h1 className="text-4xl sm:text-5xl font-extrabold text-center text-indigo-700 mb-6 sm:mb-10 leading-tight">
+          Guest Registration Form
+        </h1>
+        <p className="text-center text-lg text-gray-600 mb-8">
+          Welcome to <span className="font-semibold text-indigo-600">[Villa Name]</span>!
+          Please complete this form for a pleasant stay.
+        </p>
+
+        {/* Message display for form submission/errors */}
+        {message.text && (
+          <div className={`p-4 mb-6 rounded-md ${message.type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+            <p className="font-medium text-center">{message.text}</p>
+          </div>
+        )}
+
+        {/* Display User ID */}
+        {userId && (
+          <div className="text-center text-sm text-gray-600 mb-6 p-3 bg-gray-50 rounded-md border border-gray-200">
+            Your User ID (for private data): <span className="font-mono text-indigo-700 break-all">{userId}</span>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-10">
+          {/* Section I: Main Guest Information */}
+          <section className="bg-blue-50 p-6 rounded-lg shadow-inner border border-blue-200">
+            <h2 className="text-2xl sm:text-3xl font-bold text-indigo-600 mb-6 flex items-center">
+              <User className="mr-3 text-indigo-500" size={28} /> Main Guest Information (Booking Holder)
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                <input type="text" id="firstName" name="firstName" value={guestData.firstName} onChange={handleChange} className="w-full p-3 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 transition duration-200" required />
+              </div>
+              <div>
+                <label htmlFor="lastNameP" className="block text-sm font-medium text-gray-700 mb-1">Paternal Last Name</label>
+                <input type="text" id="lastNameP" name="lastNameP" value={guestData.lastNameP} onChange={handleChange} className="w-full p-3 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 transition duration-200" required />
+              </div>
+              <div>
+                <label htmlFor="lastNameM" className="block text-sm font-medium text-gray-700 mb-1">Maternal Last Name (Optional)</label>
+                <input type="text" id="lastNameM" name="lastNameM" value={guestData.lastNameM} onChange={handleChange} className="w-full p-3 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 transition duration-200" />
+              </div>
+              <div>
+                <label htmlFor="dob" className="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
+                <input type="date" id="dob" name="dob" value={guestData.dob} onChange={handleChange} className="w-full p-3 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 transition duration-200" required />
+              </div>
+              <div>
+                <label htmlFor="nationality" className="block text-sm font-medium text-gray-700 mb-1">Nationality</label>
+                <input type="text" id="nationality" name="nationality" value={guestData.nationality} onChange={handleChange} className="w-full p-3 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 transition duration-200" required />
+              </div>
+              <div>
+                <label htmlFor="countryOfResidence" className="block text-sm font-medium text-gray-700 mb-1">Current Country of Residence</label>
+                <input type="text" id="countryOfResidence" name="countryOfResidence" value={guestData.countryOfResidence} onChange={handleChange} className="w-full p-3 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 transition duration-200" required />
+              </div>
+              <div>
+                <label htmlFor="idType" className="block text-sm font-medium text-gray-700 mb-1">Official Identification Type</label>
+                <select id="idType" name="idType" value={guestData.idType} onChange={handleChange} className="w-full p-3 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 transition duration-200" required>
+                  <option value="">Select</option>
+                  <option value="Passport">Passport</option>
+                  <option value="National ID">National ID (INE/DNI)</option>
+                  <option value="Driver's License">Driver's License</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+              {guestData.idType === 'Other' && (
+                <div>
+                  <label htmlFor="idTypeOther" className="block text-sm font-medium text-gray-700 mb-1">Specify Identification Type</label>
+                  <input type="text" id="idTypeOther" name="idTypeOther" value={guestData.idTypeOther} onChange={handleChange} className="w-full p-3 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 transition duration-200" />
+                </div>
+              )}
+              <div>
+                <label htmlFor="idNumber" className="block text-sm font-medium text-gray-700 mb-1">Identification Number</label>
+                <input type="text" id="idNumber" name="idNumber" value={guestData.idNumber} onChange={handleChange} className="w-full p-3 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 transition duration-200" required />
+              </div>
+              <div>
+                <label htmlFor="idIssuerCountry" className="block text-sm font-medium text-gray-700 mb-1">Issuing Country of Identification</label>
+                <input type="text" id="idIssuerCountry" name="idIssuerCountry" value={guestData.idIssuerCountry} onChange={handleChange} className="w-full p-3 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 transition duration-200" required />
+              </div>
+              <div>
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">Primary Email</label>
+                <input type="email" id="email" name="email" value={guestData.email} onChange={handleChange} className="w-full p-3 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 transition duration-200" required />
+              </div>
+              <div>
+                <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">Phone Number (with country and area code)</label>
+                <input type="tel" id="phone" name="phone" value={guestData.phone} onChange={handleChange} className="w-full p-3 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 transition duration-200" required />
+              </div>
+            </div>
+            <div className="mt-6">
+              <h3 className="text-lg font-semibold text-gray-800 mb-3">Full Postal Address</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="addressStreet" className="block text-sm font-medium text-gray-700 mb-1">Street and House/Apt Number</label>
+                  <input type="text" id="addressStreet" name="addressStreet" value={guestData.addressStreet} onChange={handleChange} className="w-full p-3 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 transition duration-200" required />
+                </div>
+                <div>
+                  <label htmlFor="addressColony" className="block text-sm font-medium text-gray-700 mb-1">Neighborhood/District</label>
+                  <input type="text" id="addressColony" name="addressColony" value={guestData.addressColony} onChange={handleChange} className="w-full p-3 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 transition duration-200" required />
+                </div>
+                <div>
+                  <label htmlFor="addressCity" className="block text-sm font-medium text-gray-700 mb-1">City</label>
+                  <input type="text" id="addressCity" name="addressCity" value={guestData.addressCity} onChange={handleChange} className="w-full p-3 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 transition duration-200" required />
+                </div>
+                <div>
+                  <label htmlFor="addressState" className="block text-sm font-medium text-gray-700 mb-1">State/Province</label>
+                  <input type="text" id="addressState" name="addressState" value={guestData.addressState} onChange={handleChange} className="w-full p-3 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 transition duration-200" required />
+                </div>
+                <div>
+                  <label htmlFor="addressZip" className="block text-sm font-medium text-gray-700 mb-1">Postal Code</label>
+                  <input type="text" id="addressZip" name="addressZip" value={guestData.addressZip} onChange={handleChange} className="w-full p-3 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 transition duration-200" required />
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Section II: Stay Details */}
+          <section className="bg-blue-50 p-6 rounded-lg shadow-inner border border-blue-200">
+            <h2 className="text-2xl sm:text-3xl font-bold text-indigo-600 mb-6 flex items-center">
+              <Calendar className="mr-3 text-indigo-500" size={28} /> Stay Details
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label htmlFor="checkInDate" className="block text-sm font-medium text-gray-700 mb-1">Arrival Date</label>
+                <input type="date" id="checkInDate" name="checkInDate" value={guestData.checkInDate} onChange={handleChange} className="w-full p-3 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 transition duration-200" required />
+              </div>
+              <div>
+                <label htmlFor="checkInTime" className="block text-sm font-medium text-gray-700 mb-1">Estimated Arrival Time</label>
+                <input type="time" id="checkInTime" name="checkInTime" value={guestData.checkInTime} onChange={handleChange} className="w-full p-3 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 transition duration-200" />
+              </div>
+              <div>
+                <label htmlFor="checkOutDate" className="block text-sm font-medium text-gray-700 mb-1">Departure Date</label>
+                <input type="date" id="checkOutDate" name="checkOutDate" value={guestData.checkOutDate} onChange={handleChange} className="w-full p-3 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 transition duration-200" required />
+              </div>
+              <div>
+                <label htmlFor="numNights" className="block text-sm font-medium text-gray-700 mb-1">Total Nights</label>
+                <input type="number" id="numNights" name="numNights" value={guestData.numNights} onChange={handleChange} className="w-full p-3 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 transition duration-200" min="1" />
+              </div>
+            </div>
+            <div className="mt-6">
+              <h3 className="text-lg font-semibold text-gray-800 mb-3">Total Number of Guests</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                  <label htmlFor="adults" className="block text-sm font-medium text-gray-700 mb-1">Adults (18+)</label>
+                  <input type="number" id="adults" name="adults" value={guestData.adults} onChange={handleChange} className="w-full p-3 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 transition duration-200" min="0" required />
+                </div>
+                <div>
+                  <label htmlFor="children" className="block text-sm font-medium text-gray-700 mb-1">Children (3-17 years)</label>
+                  <input type="number" id="children" name="children" value={guestData.children} onChange={handleChange} className="w-full p-3 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 transition duration-200" min="0" />
+                </div>
+                <div>
+                  <label htmlFor="babies" className="block text-sm font-medium text-gray-700 mb-1">Infants (0-2 years)</label>
+                  <input type="number" id="babies" name="babies" value={guestData.babies} onChange={handleChange} className="w-full p-3 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 transition duration-200" min="0" />
+                </div>
+              </div>
+            </div>
+            <div className="mt-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Purpose of Visit</label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <label className="flex items-center">
+                  <input type="radio" name="visitPurpose" value="Vacation / Tourism" checked={guestData.visitPurpose === 'Vacation / Tourism'} onChange={handleChange} className="form-radio h-4 w-4 text-indigo-600 transition duration-200" />
+                  <span className="ml-2 text-gray-700">Vacation / Tourism</span>
+                </label>
+                <label className="flex items-center">
+                  <input type="radio" name="visitPurpose" value="Special Event" checked={guestData.visitPurpose === 'Special Event'} onChange={handleChange} className="form-radio h-4 w-4 text-indigo-600 transition duration-200" />
+                  <span className="ml-2 text-gray-700">Special Event (Wedding, Anniversary, etc.)</span>
+                </label>
+                {guestData.visitPurpose === 'Special Event' && (
+                  <input type="text" name="visitPurposeOther" value={guestData.visitPurposeOther} onChange={handleChange} placeholder="Specify event" className="w-full p-3 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 col-span-full" />
+                )}
+                <label className="flex items-center">
+                  <input type="radio" name="visitPurpose" value="Family / Friends Reunion" checked={guestData.visitPurpose === 'Family / Friends Reunion'} onChange={handleChange} className="form-radio h-4 w-4 text-indigo-600 transition duration-200" />
+                  <span className="ml-2 text-gray-700">Family / Friends Reunion</span>
+                </label>
+                <label className="flex items-center">
+                  <input type="radio" name="visitPurpose" value="Business / Work" checked={guestData.visitPurpose === 'Business / Work'} onChange={handleChange} className="form-radio h-4 w-4 text-indigo-600 transition duration-200" />
+                  <span className="ml-2 text-gray-700">Business / Work</span>
+                </label>
+                <label className="flex items-center">
+                  <input type="radio" name="visitPurpose" value="Other" checked={guestData.visitPurpose === 'Other'} onChange={handleChange} className="form-radio h-4 w-4 text-indigo-600 transition duration-200" />
+                  <span className="ml-2 text-gray-700">Other</span>
+                </label>
+                {guestData.visitPurpose === 'Other' && (
+                  <input type="text" name="visitPurposeOther" value={guestData.visitPurposeOther} onChange={handleChange} placeholder="Specify purpose" className="w-full p-3 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 col-span-full" />
+                )}
+              </div>
+            </div>
+            <div className="mt-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">How did you hear about us?</label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <label className="flex items-center">
+                  <input type="radio" name="howFound" value="Personal Recommendation" checked={guestData.howFound === 'Personal Recommendation'} onChange={handleChange} className="form-radio h-4 w-4 text-indigo-600 transition duration-200" />
+                  <span className="ml-2 text-gray-700">Personal Recommendation</span>
+                </label>
+                <label className="flex items-center">
+                  <input type="radio" name="howFound" value="Booking Platform" checked={guestData.howFound === 'Booking Platform'} onChange={handleChange} className="form-radio h-4 w-4 text-indigo-600 transition duration-200" />
+                  <span className="ml-2 text-gray-700">Booking Platform (Airbnb, Booking.com, etc.)</span>
+                </label>
+                {guestData.howFound === 'Booking Platform' && (
+                  <input type="text" name="howFoundOther" value={guestData.howFoundOther} onChange={handleChange} placeholder="Specify platform" className="w-full p-3 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 col-span-full" />
+                )}
+                <label className="flex items-center">
+                  <input type="radio" name="howFound" value="Social Media" checked={guestData.howFound === 'Social Media'} onChange={handleChange} className="form-radio h-4 w-4 text-indigo-600 transition duration-200" />
+                  <span className="ml-2 text-gray-700">Social Media (Facebook, Instagram, etc.)</span>
+                </label>
+                <label className="flex items-center">
+                  <input type="radio" name="howFound" value="Villa Website" checked={guestData.howFound === 'Villa Website'} onChange={handleChange} className="form-radio h-4 w-4 text-indigo-600 transition duration-200" />
+                  <span className="ml-2 text-gray-700">Villa Website</span>
+                </label>
+                <label className="flex items-center">
+                  <input type="radio" name="howFound" value="Travel Agency" checked={guestData.howFound === 'Travel Agency'} onChange={handleChange} className="form-radio h-4 w-4 text-indigo-600 transition duration-200" />
+                  <span className="ml-2 text-gray-700">Travel Agency</span>
+                </label>
+                {guestData.howFound === 'Travel Agency' && (
+                  <input type="text" name="howFoundOther" value={guestData.howFoundOther} onChange={handleChange} placeholder="Agency name" className="w-full p-3 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 col-span-full" />
+                )}
+                <label className="flex items-center">
+                  <input type="radio" name="howFound" value="Other" checked={guestData.howFound === 'Other'} onChange={handleChange} className="form-radio h-4 w-4 text-indigo-600 transition duration-200" />
+                  <span className="ml-2 text-gray-700">Other</span>
+                </label>
+                {guestData.howFound === 'Other' && (
+                  <input type="text" name="howFoundOther" value={guestData.howFoundOther} onChange={handleChange} placeholder="Specify" className="w-full p-3 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 col-span-full" />
+                )}
+              </div>
+            </div>
+            <div className="mt-6">
+              <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                <input type="checkbox" name="transportNeeded" checked={guestData.transportNeeded} onChange={handleChange} className="form-checkbox h-4 w-4 text-indigo-600 rounded transition duration-200" />
+                <span className="ml-2">Do you need transportation service from/to the airport/terminal?</span>
+              </label>
+              {guestData.transportNeeded && (
+                <textarea name="transportDetails" value={guestData.transportDetails} onChange={handleChange} rows="2" placeholder="Specify flight/arrival details (airline, flight number, time, etc.)" className="w-full p-3 border border-gray-300 rounded-md mt-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"></textarea>
+              )}
+            </div>
+          </section>
+
+          {/* Section III: Additional Guests Information */}
+          <section className="bg-blue-50 p-6 rounded-lg shadow-inner border border-blue-200">
+            <h2 className="text-2xl sm:text-3xl font-bold text-indigo-600 mb-6 flex items-center">
+              <Users className="mr-3 text-indigo-500" size={28} /> Additional Guests Information
+            </h2>
+            <p className="text-gray-600 mb-4">Please list all other guests accompanying you during your stay.</p>
+            <div className="overflow-x-auto">
+              <table className="min-w-full bg-white rounded-lg shadow-md border border-gray-200">
+                <thead className="bg-gray-100">
+                  <tr>
+                    <th className="py-3 px-4 text-left text-sm font-semibold text-gray-700 rounded-tl-lg">No.</th>
+                    <th className="py-3 px-4 text-left text-sm font-semibold text-gray-700">Full Name</th>
+                    <th className="py-3 px-4 text-left text-sm font-semibold text-gray-700">Date of Birth</th>
+                    <th className="py-3 px-4 text-left text-sm font-semibold text-gray-700">Nationality</th>
+                    <th className="py-3 px-4 text-left text-sm font-semibold text-gray-700">Relation to Main Guest</th>
+                    <th className="py-3 px-4 text-left text-sm font-semibold text-gray-700 rounded-tr-lg">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {additionalGuests.map((guest, index) => (
+                    <tr key={guest.id} className="border-t border-gray-200 hover:bg-gray-50">
+                      <td className="py-3 px-4 text-sm text-gray-800">{index + 1}.</td>
+                      <td className="py-3 px-4">
+                        <input type="text" name="name" value={guest.name} onChange={(e) => handleAdditionalGuestChange(index, e)} className="w-full p-2 border border-gray-300 rounded-md text-sm focus:ring-indigo-500 focus:border-indigo-500" placeholder="Full Name" />
+                      </td>
+                      <td className="py-3 px-4">
+                        <input type="date" name="dob" value={guest.dob} onChange={(e) => handleAdditionalGuestChange(index, e)} className="w-full p-2 border border-gray-300 rounded-md text-sm focus:ring-indigo-500 focus:border-indigo-500" />
+                      </td>
+                      <td className="py-3 px-4">
+                        <input type="text" name="nationality" value={guest.nationality} onChange={(e) => handleAdditionalGuestChange(index, e)} className="w-full p-2 border border-gray-300 rounded-md text-sm focus:ring-indigo-500 focus:border-indigo-500" placeholder="Nationality" />
+                      </td>
+                      <td className="py-3 px-4">
+                        <input type="text" name="relation" value={guest.relation} onChange={(e) => handleAdditionalGuestChange(index, e)} className="w-full p-2 border border-gray-300 rounded-md text-sm focus:ring-indigo-500 focus:border-indigo-500" placeholder="e.g. Spouse, Child" />
+                      </td>
+                      <td className="py-3 px-4">
+                        {additionalGuests.length > 1 && (
+                          <button type="button" onClick={() => removeAdditionalGuest(guest.id)} className="text-red-600 hover:text-red-800 transition duration-200 p-1 rounded-full hover:bg-red-100">
+                            <Trash2 size={20} />
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <button type="button" onClick={addAdditionalGuest} className="mt-4 flex items-center px-4 py-2 bg-indigo-500 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-600 transition duration-300 ease-in-out transform hover:scale-105">
+              <PlusCircle className="mr-2" size={20} /> Add Additional Guest
+            </button>
+          </section>
+
+          {/* Section IV: Preferences and Special Needs */}
+          <section className="bg-blue-50 p-6 rounded-lg shadow-inner border border-blue-200">
+            <h2 className="text-2xl sm:text-3xl font-bold text-indigo-600 mb-6 flex items-center">
+              <Heart className="mr-3 text-indigo-500" size={28} /> Preferences and Special Needs
+            </h2>
+            <div className="space-y-4">
+              <div>
+                <label className="flex items-center text-sm font-medium text-gray-700 mb-1">
+                  <input type="checkbox" name="dietaryRestrictions" checked={guestData.dietaryRestrictions} onChange={handleChange} className="form-checkbox h-4 w-4 text-indigo-600 rounded transition duration-200" />
+                  <span className="ml-2">Do you have any dietary restrictions or food allergies?</span>
+                </label>
+                {guestData.dietaryRestrictions && (
+                  <textarea name="dietaryDetails" value={guestData.dietaryDetails} onChange={handleChange} rows="2" placeholder="Specify dietary restrictions or food allergies" className="w-full p-3 border border-gray-300 rounded-md mt-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"></textarea>
+                )}
+              </div>
+              <div>
+                <label className="flex items-center text-sm font-medium text-gray-700 mb-1">
+                  <input type="checkbox" name="allergies" checked={guestData.allergies} onChange={handleChange} className="form-checkbox h-4 w-4 text-indigo-600 rounded transition duration-200" />
+                  <span className="ml-2">Do you have any allergies (non-food, e.g., dust mites, perfumes)?</span>
+                </label>
+                {guestData.allergies && (
+                  <textarea name="allergyDetails" value={guestData.allergyDetails} onChange={handleChange} rows="2" placeholder="Specify other allergies" className="w-full p-3 border border-gray-300 rounded-md mt-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"></textarea>
+                )}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Extra Bed / Crib Needs:</label>
+                <div className="flex items-center space-x-4">
+                  <label className="flex items-center">
+                    <input type="radio" name="extraBedCrib" value="Crib" checked={guestData.extraBedCrib === 'Crib'} onChange={handleChange} className="form-radio h-4 w-4 text-indigo-600 transition duration-200" />
+                    <span className="ml-2">Baby crib</span>
+                  </label>
+                  {guestData.extraBedCrib === 'Crib' && (
+                    <input type="number" name="cribs" value={guestData.extraBedCribDetails.cribs} onChange={handleExtraBedCribChange} className="w-20 p-2 border border-gray-300 rounded-md text-sm focus:ring-indigo-500 focus:border-indigo-500" min="0" />
+                  )}
+                  <label className="flex items-center">
+                    <input type="radio" name="extraBedCrib" value="Extra Bed" checked={guestData.extraBedCrib === 'Extra Bed'} onChange={handleChange} className="form-radio h-4 w-4 text-indigo-600 transition duration-200" />
+                    <span className="ml-2">Extra single bed</span>
+                  </label>
+                  {guestData.extraBedCrib === 'Extra Bed' && (
+                    <input type="number" name="extraBeds" value={guestData.extraBedCribDetails.extraBeds} onChange={handleExtraBedCribChange} className="w-20 p-2 border border-gray-300 rounded-md text-sm focus:ring-indigo-500 focus:border-indigo-500" min="0" />
+                  )}
+                  <label className="flex items-center">
+                    <input type="radio" name="extraBedCrib" value="No" checked={guestData.extraBedCrib === 'No'} onChange={handleChange} className="form-radio h-4 w-4 text-indigo-600 transition duration-200" />
+                    <span className="ml-2">No</span>
+                  </label>
+                </div>
+              </div>
+              <div>
+                <label className="flex items-center text-sm font-medium text-gray-700 mb-1">
+                  <input type="checkbox" name="accessibilityNeeds" checked={guestData.accessibilityNeeds} onChange={handleChange} className="form-checkbox h-4 w-4 text-indigo-600 rounded transition duration-200" />
+                  <span className="ml-2">Do you have any accessibility or reduced mobility needs?</span>
+                </label>
+                {guestData.accessibilityNeeds && (
+                  <textarea name="accessibilityDetails" value={guestData.accessibilityDetails} onChange={handleChange} rows="2" placeholder="Specify accessibility needs" className="w-full p-3 border border-gray-300 rounded-md mt-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"></textarea>
+                )}
+              </div>
+              <div>
+                <label className="flex items-center text-sm font-medium text-gray-700 mb-1">
+                  <input type="checkbox" name="pets" checked={guestData.pets} onChange={handleChange} className="form-checkbox h-4 w-4 text-indigo-600 rounded transition duration-200" />
+                  <span className="ml-2">Are you traveling with pets?</span>
+                </label>
+                {guestData.pets && (
+                  <textarea name="petDetails" value={guestData.petDetails} onChange={handleChange} rows="2" placeholder="Specify pet type, breed, and approximate weight. Note: Please consult our pet policy in advance." className="w-full p-3 border border-gray-300 rounded-md mt-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"></textarea>
+                )}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Villa Temperature Preferences:</label>
+                <div className="flex flex-wrap gap-4">
+                  <label className="flex items-center">
+                    <input type="radio" name="tempPreference" value="Warmer" checked={guestData.tempPreference === 'Warmer'} onChange={handleChange} className="form-radio h-4 w-4 text-indigo-600 transition duration-200" />
+                    <span className="ml-2">Warmer</span>
+                  </label>
+                  <label className="flex items-center">
+                    <input type="radio" name="tempPreference" value="Cooler" checked={guestData.tempPreference === 'Cooler'} onChange={handleChange} className="form-radio h-4 w-4 text-indigo-600 transition duration-200" />
+                    <span className="ml-2">Cooler</span>
+                  </label>
+                  <label className="flex items-center">
+                    <input type="radio" name="tempPreference" value="No Preference" checked={guestData.tempPreference === 'No Preference'} onChange={handleChange} className="form-radio h-4 w-4 text-indigo-600 transition duration-200" />
+                    <span className="ml-2">No Preference</span>
+                  </label>
+                </div>
+              </div>
+              <div>
+                <label htmlFor="specialRequests" className="block text-sm font-medium text-gray-700 mb-1">Are there any special requests, preferences, or additional information we should know to make your stay more comfortable and memorable?</label>
+                <textarea id="specialRequests" name="specialRequests" value={guestData.specialRequests} onChange={handleChange} rows="4" className="w-full p-3 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"></textarea>
+              </div>
+            </div>
+          </section>
+
+          {/* Section V: Emergency Contact Information */}
+          <section className="bg-blue-50 p-6 rounded-lg shadow-inner border border-blue-200">
+            <h2 className="text-2xl sm:text-3xl font-bold text-indigo-600 mb-6 flex items-center">
+              <Phone className="mr-3 text-indigo-500" size={28} /> Emergency Contact Information
+            </h2>
+            <p className="text-gray-600 mb-4">In case of an emergency, please provide the details of a contact person outside your travel group.</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label htmlFor="emergencyContactName" className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                <input type="text" id="emergencyContactName" name="emergencyContactName" value={guestData.emergencyContactName} onChange={handleChange} className="w-full p-3 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 transition duration-200" required />
+              </div>
+              <div>
+                <label htmlFor="emergencyContactRelation" className="block text-sm font-medium text-gray-700 mb-1">Relation to Main Guest</label>
+                <input type="text" id="emergencyContactRelation" name="emergencyContactRelation" value={guestData.emergencyContactRelation} onChange={handleChange} className="w-full p-3 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 transition duration-200" required />
+              </div>
+              <div>
+                <label htmlFor="emergencyContactPhone" className="block text-sm font-medium text-gray-700 mb-1">Phone Number (with country and area code)</label>
+                <input type="tel" id="emergencyContactPhone" name="emergencyContactPhone" value={guestData.emergencyContactPhone} onChange={handleChange} className="w-full p-3 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 transition duration-200" required />
+              </div>
+              <div>
+                <label htmlFor="emergencyContactEmail" className="block text-sm font-medium text-gray-700 mb-1">Email (Optional)</label>
+                <input type="email" id="emergencyContactEmail" name="emergencyContactEmail" value={guestData.emergencyContactEmail} onChange={handleChange} className="w-full p-3 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 transition duration-200" />
+              </div>
+            </div>
+          </section>
+
+          {/* Section VI: Terms and Conditions / Privacy Notice */}
+          <section className="bg-blue-50 p-6 rounded-lg shadow-inner border border-blue-200">
+            <h2 className="text-2xl sm:text-3xl font-bold text-indigo-600 mb-6 flex items-center">
+              <FileText className="mr-3 text-indigo-500" size={28} /> Terms and Conditions / Privacy Notice
+            </h2>
+            <div className="space-y-4">
+              <p className="text-gray-700">
+                I have read, understood, and accept the **Rental and Stay Terms and Conditions** of <span className="font-semibold">[Villa Name]</span>, which are available at <a href="#" className="text-indigo-600 hover:underline">this link</a>.
+              </p>
+              <p className="text-gray-700">
+                I have read and understand the **Privacy Notice** of <span className="font-semibold">[Villa Name]</span> regarding the collection, use, and protection of my personal data, in accordance with current legislation.
+              </p>
+              <label className="flex items-center text-lg font-medium text-gray-800">
+                <input type="checkbox" name="termsAccepted" checked={guestData.termsAccepted} onChange={handleChange} className="form-checkbox h-6 w-6 text-indigo-600 rounded focus:ring-indigo-500 transition duration-200" required />
+                <span className="ml-3">Yes, I Accept</span>
+              </label>
+            </div>
+          </section>
+
+          <div className="text-center mt-10">
+            <button type="submit" className="px-8 py-4 bg-indigo-600 text-white font-bold text-xl rounded-lg shadow-xl hover:bg-indigo-700 transition duration-300 ease-in-out transform hover:scale-105 flex items-center justify-center mx-auto">
+              <CheckCircle className="mr-3" size={24} /> Submit Form
+            </button>
+          </div>
+        </form>
+
+        {/* AI-Powered Tools Section */}
+        <section className="mt-10 bg-blue-50 p-6 rounded-lg shadow-inner border border-blue-200">
+          <h2 className="text-2xl sm:text-3xl font-bold text-indigo-600 mb-6 flex items-center">
+            ✨ AI-Powered Tools ✨
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <button
+                type="button"
+                onClick={generateWelcomeMessage}
+                disabled={isGeneratingWelcome}
+                className="w-full px-6 py-3 bg-purple-600 text-white font-bold rounded-lg shadow-md hover:bg-purple-700 transition duration-300 ease-in-out transform hover:scale-105 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isGeneratingWelcome ? (
+                  <>
+                    <Loader2 className="animate-spin mr-2" size={20} /> Generating Welcome Message...
+                  </>
+                ) : (
+                  <>
+                    <User className="mr-2" size={20} /> Generate Welcome Message
+                  </>
+                )}
+              </button>
+              {welcomeMessage && (
+                <div className="mt-4 p-4 bg-white border border-gray-300 rounded-md shadow-sm">
+                  <h3 className="font-semibold text-gray-800 mb-2">Generated Welcome Message:</h3>
+                  <p className="text-gray-700 whitespace-pre-wrap">{welcomeMessage}</p>
+                </div>
+              )}
+            </div>
+
+            <div>
+              <button
+                type="button"
+                onClick={summarizeGuestPreferences}
+                disabled={isGeneratingSummary}
+                className="w-full px-6 py-3 bg-teal-600 text-white font-bold rounded-lg shadow-md hover:bg-teal-700 transition duration-300 ease-in-out transform hover:scale-105 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isGeneratingSummary ? (
+                  <>
+                    <Loader2 className="animate-spin mr-2" size={20} /> Summarizing Preferences...
+                  </>
+                ) : (
+                  <>
+                    <FileText className="mr-2" size={20} /> Summarize Guest Preferences
+                  </>
+                )}
+              </button>
+              {summaryOfPreferences && (
+                <div className="mt-4 p-4 bg-white border border-gray-300 rounded-md shadow-sm">
+                  <h3 className="font-semibold text-gray-800 mb-2">Summary of Preferences:</h3>
+                  <p className="text-gray-700 whitespace-pre-wrap">{summaryOfPreferences}</p>
+                </div>
+              )}
+            </div>
+
+            {/* New: Generate Thank You Email */}
+            <div>
+              <button
+                type="button"
+                onClick={generateThankYouEmail}
+                disabled={isGeneratingThankYou}
+                className="w-full px-6 py-3 bg-blue-600 text-white font-bold rounded-lg shadow-md hover:bg-blue-700 transition duration-300 ease-in-out transform hover:scale-105 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isGeneratingThankYou ? (
+                  <>
+                    <Loader2 className="animate-spin mr-2" size={20} /> Generating Thank You Email...
+                  </>
+                ) : (
+                  <>
+                    <Mail className="mr-2" size={20} /> Generate Thank You Email
+                  </>
+                )}
+              </button>
+              {thankYouEmail && (
+                <div className="mt-4 p-4 bg-white border border-gray-300 rounded-md shadow-sm">
+                  <h3 className="font-semibold text-gray-800 mb-2">Generated Thank You Email:</h3>
+                  <p className="text-gray-700 whitespace-pre-wrap">{thankYouEmail}</p>
+                </div>
+              )}
+            </div>
+
+            {/* New: Draft Response to Special Request */}
+            <div>
+              <button
+                type="button"
+                onClick={draftSpecialRequestResponse}
+                disabled={isGeneratingResponse}
+                className="w-full px-6 py-3 bg-orange-600 text-white font-bold rounded-lg shadow-md hover:bg-orange-700 transition duration-300 ease-in-out transform hover:scale-105 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isGeneratingResponse ? (
+                  <>
+                    <Loader2 className="animate-spin mr-2" size={20} /> Drafting Response...
+                  </>
+                ) : (
+                  <>
+                    <MessageSquare className="mr-2" size={20} /> Draft Special Request Response
+                  </>
+                )}
+              </button>
+              {specialRequestResponse && (
+                <div className="mt-4 p-4 bg-white border border-gray-300 rounded-md shadow-sm">
+                  <h3 className="font-semibold text-gray-800 mb-2">Drafted Response:</h3>
+                  <p className="text-gray-700 whitespace-pre-wrap">{specialRequestResponse}</p>
+                </div>
+              )}
+            </div>
+
+          </div>
+        </section>
+
+        {/* Room Assignment Table Section */}
+        <section className="mt-16 bg-blue-50 p-6 rounded-lg shadow-inner border border-blue-200">
+          <h2 className="text-2xl sm:text-3xl font-bold text-indigo-600 mb-6 flex items-center">
+            <Home className="mr-3 text-indigo-500" size={28} /> Room Assignment Table
+          </h2>
+          <p className="text-gray-600 mb-4">
+            This format allows for clear tracking of which guest is assigned to each room.
+            You can directly edit the "Occupied By:" cells to assign clients.
+          </p>
+          <div className="overflow-x-auto">
+            <table className="min-w-full bg-white rounded-lg shadow-md border border-gray-200">
+              <thead className="bg-gray-100">
+                <tr>
+                  <th className="py-3 px-4 text-left text-sm font-semibold text-gray-700 rounded-tl-lg">Reservation ID</th>
+                  <th className="py-3 px-4 text-left text-sm font-semibold text-gray-700">Arrival</th>
+                  <th className="py-3 px-4 text-left text-sm font-semibold text-gray-700">Departure</th>
+                  <th className="py-3 px-4 text-left text-sm font-semibold text-gray-700">Main Guest</th>
+                  <th className="py-3 px-4 text-left text-sm font-semibold text-gray-700">Total Guests</th>
+                  <th className="py-3 px-4 text-left text-sm font-semibold text-gray-700">Room 1</th>
+                  <th className="py-3 px-4 text-left text-sm font-semibold text-gray-700">Occupied By:</th>
+                  <th className="py-3 px-4 text-left text-sm font-semibold text-gray-700">Room 2</th>
+                  <th className="py-3 px-4 text-left text-sm font-semibold text-gray-700">Occupied By:</th>
+                  <th className="py-3 px-4 text-left text-sm font-semibold text-gray-700">Room 3</th>
+                  <th className="py-3 px-4 text-left text-sm font-semibold text-gray-700">Occupied By:</th>
+                  <th className="py-3 px-4 text-left text-sm font-semibold text-gray-700">Room 4</th>
+                  <th className="py-3 px-4 text-left text-sm font-semibold text-gray-700">Occupied By:</th>
+                  <th className="py-3 px-4 text-left text-sm font-semibold text-gray-700">Notes</th>
+                  <th className="py-3 px-4 text-left text-sm font-semibold text-gray-700 rounded-tr-lg">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {roomAssignments.map((row, index) => (
+                  <tr key={row.id} className="border-t border-gray-200 hover:bg-gray-50">
+                    <td className="py-3 px-4 text-sm text-gray-800">{row.reservationId}</td>
+                    <td className="py-3 px-4 text-sm text-gray-800">{row.checkIn}</td>
+                    <td className="py-3 px-4 text-sm text-gray-800">{row.checkOut}</td>
+                    <td className="py-3 px-4 text-sm text-gray-800">{row.mainGuest}</td>
+                    <td className="py-3 px-4 text-sm text-gray-800">{row.totalGuests}</td>
+                    <td className="py-3 px-4 text-sm text-gray-800">{row.room1Name}</td>
+                    <td className="py-3 px-4">
+                      <input type="text" name="room1Occupant" value={row.room1Occupant} onChange={(e) => handleRoomAssignmentChange(index, e)} className="w-full p-2 border border-gray-300 rounded-md text-sm focus:ring-indigo-500 focus:border-indigo-500" />
+                    </td>
+                    <td className="py-3 px-4 text-sm text-gray-800">{row.room2Name}</td>
+                    <td className="py-3 px-4">
+                      <input type="text" name="room2Occupant" value={row.room2Occupant} onChange={(e) => handleRoomAssignmentChange(index, e)} className="w-full p-2 border border-gray-300 rounded-md text-sm focus:ring-indigo-500 focus:border-indigo-500" />
+                    </td>
+                    <td className="py-3 px-4 text-sm text-gray-800">{row.room3Name}</td>
+                    <td className="py-3 px-4">
+                      <input type="text" name="room3Occupant" value={row.room3Occupant} onChange={(e) => handleRoomAssignmentChange(index, e)} className="w-full p-2 border border-gray-300 rounded-md text-sm focus:ring-indigo-500 focus:border-indigo-500" />
+                    </td>
+                    <td className="py-3 px-4 text-sm text-gray-800">{row.room4Name}</td>
+                    <td className="py-3 px-4">
+                      <input type="text" name="room4Occupant" value={row.room4Occupant} onChange={(e) => handleRoomAssignmentChange(index, e)} className="w-full p-2 border border-gray-300 rounded-md text-sm focus:ring-indigo-500 focus:border-indigo-500" />
+                    </td>
+                    <td className="py-3 px-4 text-sm text-gray-800">{row.notes}</td>
+                    <td className="py-3 px-4 text-sm text-gray-800">{row.status}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </div>
+  );
+};
+
+export default App;
+const fs = require('fs');
+const translate = require('@vitalets/google-translate-api');
+
+function usage() {
+  console.log('Usage: node translate.js --text "texto" | --input file [-o outputFile]');
+}
+
+async function main() {
+  const argv = require('minimist')(process.argv.slice(2));
+  if (!argv.text && !argv.input) {
+    usage(); return;
+  }
+
+  let source;
+  if (argv.input) {
+    source = fs.readFileSync(argv.input, 'utf8');
+  } else {
+    source = argv.text;
+  }
+
+  try {
+    const res = await translate(source, { to: 'en' });
+    const translated = res.text;
+    if (argv.o) {
+      fs.writeFileSync(argv.o, translated, 'utf8');
+      console.log(`Translated text written to ${argv.o}`);
+    } else {
+      console.log(translated);
+    }
+  } catch (err) {
+    console.error('Error translating:', err.message || err);
+  }
+}
+
+main();npm init -y
+npm install @vitalets/google-translate-api minimist
+node .\translate.js --text "Buen día, ¿puedes ayudarme?"
+# o usando archivo:
+node .\translate.js --input .\texto_es.txt -o .\texto_en.txt{
+  "name": "translate-cli",
+  "version": "1.0.0",
+  "dependencies": {
+    "@vitalets/google-translate-api": "^8.0.4",
+    "minimist": "^1.2.8"
+  }
+}import argparse
+import sys
+import os
+from deep_translator import GoogleTranslator
+
+def translate_text(text, target='en'):
+    return GoogleTranslator(source='auto', target=target).translate(text)
+
+def translate_file(input_path, output_path=None, target='en', overwrite=False):
+    if not os.path.isfile(input_path):
+        raise FileNotFoundError(input_path)
+    with open(input_path, 'r', encoding='utf-8') as f:
+        source = f.read()
+    translated = translate_text(source, target=target)
+    out = output_path or (input_path if overwrite else f"{os.path.splitext(input_path)[0]}_en{os.path.splitext(input_path)[1]}")
+    with open(out, 'w', encoding='utf-8') as f:
+        f.write(translated)
+    return out
+
+def translate_folder(folder, ext='.txt', target='en', overwrite=False):
+    results = []
+    for root, _, files in os.walk(folder):
+        for name in files:
+            if name.lower().endswith(ext.lower()):
+                inp = os.path.join(root, name)
+                out = None if overwrite else None
+                out_path = translate_file(inp, output_path=None, target=target, overwrite=overwrite)
+                results.append((inp, out_path))
+    return results
+
+def main():
+    parser = argparse.ArgumentParser(description='Translate text or files to English (or other language)')
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument('-t', '--text', help='Text to translate (wrap in quotes)')
+    group.add_argument('-i', '--input', help='Path to input file to translate')
+    group.add_argument('-d', '--dir', help='Directory: translate all files with given extension')
+    parser.add_argument('-o', '--output', help='Output file path (only for single file/text)')
+    parser.add_argument('-e', '--ext', default='.txt', help='File extension to translate in directory mode (default .txt)')
+    parser.add_argument('--target', default='en', help='Target language code (default "en")')
+    parser.add_argument('--overwrite', action='store_true', help='Overwrite input files when translating (file mode or dir mode)')
+    args = parser.parse_args()
+
+    try:
+        if args.text:
+            translated = translate_text(args.text, target=args.target)
+            if args.output:
+                with open(args.output, 'w', encoding='utf-8') as f:
+                    f.write(translated)
+                print(f"Translated text written to {args.output}")
+            else:
+                print(translated)
+        elif args.input:
+            out = translate_file(args.input, output_path=args.output, target=args.target, overwrite=args.overwrite)
+            print(f"Translated file: {out}")
+        elif args.dir:
+            results = translate_folder(args.dir, ext=args.ext, target=args.target, overwrite=args.overwrite)
+            for inp, out in results:
+                print(f"{inp} -> {out}")
+    except Exception as e:
+        print("Error:", str(e), file=sys.stderr)
+        sys.exit(1)
+
+if __name__ == '__main__':
+    main()    deep-translator    Simple translator CLI (Python)
+    
+    Requisitos:
+    - Python 3.7+
+    - pip
+    
+    Instalación (PowerShell):
+    pip install -r .\requirements.txt
+    
+    Uso:
+    - Traducir texto:
+    python .\translate.py --text "Hola, ¿cómo estás?"
+    
+    - Traducir archivo:
+    python .\translate.py --input .\texto_es.txt --output .\texto_en.txt
+    
+    - Traducir todos los .txt en una carpeta:
+    python .\translate.py --dir .\mi_carpeta --ext .txt
+    
+    Opciones:
+    --target : código de idioma destino (p.ej. en, es, fr). Por defecto 'en'.
+    --overwrite : sobrescribir archivos originales (cuando aplica).    cd "C:\Users\aaron\OneDrive\Escritorio\booking"
+    pip install -r .\requirements.txt    Set-Content -Path .\texto_es.txt -Value "Necesito una habitación para tres noches a partir del 20 de enero."
+    python .\translate.py --input .\texto_es.txt --output .\texto_en.txt
+    Get-Content .\texto_en.txt    git push -u origin feature/add-translate-html    cd "C:\Users\aaron\OneDrive\Escritorio\booking"
+    git checkout -b feature/add-translate-html
+    git add translate.html
+    git commit -m "Add translate.html simple front-end to translate text to English"    # Esto abrirá el asistente para crear PR
+    gh pr create --fill --base main --head feature/add-translate-html    # Esto abrirá el asistente para crear PR
+    gh pr create --fill --base main --head feature/add-translate-html    Start-Process .\translate.html    Start-Process .\translate.html
