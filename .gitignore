@@ -1,0 +1,10 @@
+﻿# Windows
+Thumbs.db
+ehthumbs.db
+
+# Node (if used later)
+node_modules/
+
+# Editor
+.vscode/
+.DS_Store

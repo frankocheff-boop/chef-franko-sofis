@@ -1,0 +1,12 @@
+﻿:root{
+  --bg:#fff8f0;
+  --accent:#d95f1a;
+  --text:#333;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;font-family:Inter,system-ui,"Segoe UI",Arial,sans-serif;color:var(--text);background:var(--bg)}
+header{padding:2rem;text-align:center;background:linear-gradient(90deg,rgba(217,95,26,0.06),transparent)}
+h1{margin:0;font-size:2rem}
+main{max-width:900px;margin:3rem auto;padding:0 1rem;text-align:center}
+.cta{display:inline-block;margin-top:1rem;padding:0.6rem 1rem;background:var(--accent);color:white;text-decoration:none;border-radius:6px}
+footer{padding:1rem;text-align:center;font-size:0.9rem;color:#666}
