@@ -1,0 +1,647 @@
+ 
+nh<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chef Franko POS System v1.0</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        /* Ocultar scrollbar para diseño limpio tipo App */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e0; border-radius: 3px; }
+        .dish-card:active { transform: scale(0.95); }
+    </style>
+</head>
+<body class="bg-gray-100 h-screen overflow-hidden flex text-gray-800">
+
+    <div class="flex-1 flex flex-col h-full relative">
+        
+        <div class="bg-white p-4 shadow-sm flex justify-between items-center z-10">
+            <div>
+                <h1 class="text-2xl font-extrabold text-indigo-700 tracking-tight">FRANKO POS ⚡</h1>
+                <p class="text-xs text-gray-500" id="datetime">Cargando fecha...</p>
+            </div>
+            <div class="flex gap-2">
+                <div class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-bold flex items-center">
+                    <span class="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></span> Online
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-gray-50 p-2 border-b flex gap-2 overflow-x-auto whitespace-nowrap" id="category-container">
+            </div>
+
+        <div class="flex-1 overflow-y-auto p-4 bg-gray-100">
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4" id="menu-grid">
+                </div>
+        </div>
+    </div>
+
+    <div class="w-96 bg-white shadow-2xl h-full flex flex-col border-l border-gray-200 relative z-20">
+        
+        <div class="p-4 bg-indigo-50 border-b border-indigo-100">
+            <div class="flex justify-between items-center mb-2">
+                <h2 class="font-bold text-lg">Orden #<span id="order-id">001</span></h2>
+                <button onclick="clearCart()" class="text-red-500 text-sm hover:text-red-700 font-semibold">🗑️ Borrar</button>
+            </div>
+            <div class="flex gap-2">
+                <button class="flex-1 bg-white border border-indigo-200 text-indigo-600 py-1 rounded text-sm hover:bg-indigo-100">Mesa 4</button>
+                <button class="flex-1 bg-white border border-indigo-200 text-indigo-600 py-1 rounded text-sm hover:bg-indigo-100">Llevar</button>
+            </div>
+        </div>
+
+        <div class="flex-1 overflow-y-auto p-4 space-y-3" id="cart-items">
+            <div class="h-full flex flex-col items-center justify-center text-gray-400 opacity-50">
+                <span class="text-6xl mb-2">🛒</span>
+                <p>No hay productos</p>
+            </div>
+        </div>
+
+        <div class="bg-gray-50 p-4 border-t border-gray-200">
+            <div class="space-y-1 mb-4 text-sm">
+                <div class="flex justify-between text-gray-600">
+                    <span>Subtotal</span>
+                    <span id="subtotal-display">$0.00</span>
+                </div>
+                <div class="flex justify-between text-gray-600">
+                    <span>IVA (16%)</span>
+                    <span id="tax-display">$0.00</span>
+                </div>
+                <div class="flex justify-between font-bold text-xl text-gray-900 mt-2 pt-2 border-t border-gray-300">
+                    <span>Total</span>
+                    <span id="total-display">$0.00</span>
+                </div>
+            </div>
+
+            <button onclick="openCheckout()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-xl shadow-lg transform transition hover:-translate-y-1 flex justify-between px-6">
+                <span>COBRAR</span>
+                <span id="btn-total">$0.00</span>
+            </button>
+        </div>
+    </div>
+
+    <div id="checkout-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 transform transition-all scale-100">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold text-gray-800">Procesar Pago</h3>
+                <button onclick="closeCheckout()" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+            </div>
+
+            <div class="text-center mb-8">
+                <p class="text-gray-500 uppercase text-xs font-bold tracking-wider">Total a Pagar</p>
+                <p class="text-4xl font-extrabold text-indigo-600" id="modal-total">$0.00</p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3 mb-6">
+                <button onclick="processPayment('Efectivo')" class="p-4 border-2 border-gray-100 rounded-xl hover:border-green-500 hover:bg-green-50 transition flex flex-col items-center gap-2 group">
+                    <span class="text-2xl group-hover:scale-110 transition">💵</span>
+                    <span class="font-bold text-gray-600 group-hover:text-green-600">Efectivo</span>
+                </button>
+                <button onclick="processPayment('Tarjeta')" class="p-4 border-2 border-gray-100 rounded-xl hover:border-blue-500 hover:bg-blue-50 transition flex flex-col items-center gap-2 group">
+                    <span class="text-2xl group-hover:scale-110 transition">💳</span>
+                    <span class="font-bold text-gray-600 group-hover:text-blue-600">Tarjeta</span>
+                </button>
+            </div>
+
+            <button onclick="closeCheckout()" class="w-full py-3 text-gray-500 font-semibold hover:bg-gray-100 rounded-lg">Cancelar</button>
+        </div>
+    </div>
+
+    <script><script>
+    // --- 1. BASE DE DATOS COMPLETA (ALIMENTOS Y BEBIDAS) ---
+    const products = [
+        // --- DESAYUNOS (100) ---
+        { id: 101, name: "American Breakfast", price: 18.00, category: "breakfast", emoji: "🥞" },
+        { id: 102, name: "Chilaquiles Divorciados", price: 15.00, category: "breakfast", emoji: "🥘" },
+        { id: 103, name: "Waffles & Maple", price: 14.00, category: "breakfast", emoji: "🧇" },
+        { id: 104, name: "Tortilla Española", price: 16.00, category: "breakfast", emoji: "🍳" },
+        { id: 105, name: "French Toast", price: 14.00, category: "breakfast", emoji: "🍞" },
+        { id: 106, name: "Fruta de Temporada", price: 10.00, category: "breakfast", emoji: "🍉" },
+
+        // --- ALMUERZOS / LUNCH (200) ---
+        { id: 201, name: "Chicken Caesar Wrap", price: 16.00, category: "lunch", emoji: "🌯" },
+        { id: 202, name: "BBQ Sirloin Burger", price: 18.00, category: "lunch", emoji: "🍔" },
+        { id: 203, name: "Greek Salad", price: 14.00, category: "lunch", emoji: "🥗" },
+        { id: 204, name: "Pescado Veracruz", price: 22.00, category: "lunch", emoji: "🐟" },
+        { id: 205, name: "Pollo Mole", price: 20.00, category: "lunch", emoji: "🍗" },
+        { id: 206, name: "Ceviche Vallarta", price: 18.00, category: "lunch", emoji: "🦐" },
+
+        // --- CENAS / DINNER (300) ---
+        { id: 301, name: "Sopa de Tortilla", price: 12.00, category: "dinner", emoji: "🥣" },
+        { id: 302, name: "Chile Relleno", price: 18.00, category: "dinner", emoji: "🌶️" },
+        { id: 303, name: "Filete Tikin Xic", price: 24.00, category: "dinner", emoji: "🐠" },
+        { id: 304, name: "Langosta Caribeña", price: 45.00, category: "dinner", emoji: "🦞" },
+        { id: 305, name: "Medallones Res", price: 35.00, category: "dinner", emoji: "🥩" },
+        { id: 306, name: "Camarones Louisiana", price: 28.00, category: "dinner", emoji: "🍤" },
+
+        // --- POSTRES (400) ---
+        { id: 401, name: "NY Cheesecake", price: 9.00, category: "dessert", emoji: "🍰" },
+        { id: 402, name: "Tiramisu", price: 8.00, category: "dessert", emoji: "🍮" },
+        { id: 403, name: "Fresas con Crema", price: 9.00, category: "dessert", emoji: "🍓" },
+
+        // --- BEBIDAS SIN ALCOHOL (500) ---
+        { id: 501, name: "Jugo Naranja Fresco", price: 5.00, category: "drinks", emoji: "🍊" },
+        { id: 502, name: "Coca-Cola / Light", price: 3.50, category: "drinks", emoji: "🥤" },
+        { id: 503, name: "Limonada Mineral", price: 4.50, category: "drinks", emoji: "🍋" },
+        { id: 504, name: "Agua Embotellada", price: 3.00, category: "drinks", emoji: "💧" },
+        { id: 505, name: "Café Americano", price: 4.00, category: "drinks", emoji: "☕" },
+
+        // --- BAR / ALCOHOL (600) ---
+        { id: 601, name: "Cerveza Nacional", price: 6.00, category: "bar", emoji: "🍺" },
+        { id: 602, name: "Margarita Clásica", price: 12.00, category: "bar", emoji: "🍸" },
+        { id: 603, name: "Tequila Shot (Don Julio)", price: 10.00, category: "bar", emoji: "🥃" },
+        { id: 604, name: "Copa Vino Tinto", price: 11.00, category: "bar", emoji: "🍷" },
+        { id: 605, name: "Copa Vino Blanco", price: 11.00, category: "bar", emoji: "🥂" },
+    ];
+
+    const categories = [
+        { id: "all", name: "Todo", icon: "📋" },
+        { id: "breakfast", name: "Desayuno", icon: "🍳" },
+        { id: "lunch", name: "Almuerzo", icon: "☀️" },
+        { id: "dinner", name: "Cena", icon: "🌙" },
+        { id: "dessert", name: "Postre", icon: "🍰" },
+        { id: "drinks", name: "Bebidas", icon: "🥤" }, // Nueva categoría
+        { id: "bar", name: "Bar/Alcohol", icon: "🍺" }  // Nueva categoría
+    ];
+
+    let cart = [];
+    let currentCategory = 'all';
+    let orderCount = 1;
+
+    // --- 2. INICIALIZACIÓN ---
+    document.addEventListener('DOMContentLoaded', () => {
+        renderCategories();
+        renderMenu();
+        updateDateTime();
+        setInterval(updateDateTime, 1000);
+    });
+
+    function updateDateTime() {
+        const now = new Date();
+        document.getElementById('datetime').innerText = now.toLocaleDateString('es-MX', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    }
+
+    // --- 3. RENDERIZADO ---
+    function renderCategories() {
+        const container = document.getElementById('category-container');
+        container.innerHTML = categories.map(cat => `
+            <button onclick="filterMenu('${cat.id}')" 
+                class="px-4 py-2 rounded-lg font-semibold text-sm transition whitespace-nowrap
+                ${currentCategory === cat.id ? 'bg-indigo-600 text-white shadow-md' : 'bg-white text-gray-600 hover:bg-gray-200'}">
+                ${cat.icon} ${cat.name}
+            </button>
+        `).join('');
+    }
+
+    function filterMenu(catId) {
+        currentCategory = catId;
+        renderCategories();
+        renderMenu();
+    }
+
+    function renderMenu() {
+        const grid = document.getElementById('menu-grid');
+        const filtered = currentCategory === 'all' 
+            ? products 
+            : products.filter(p => p.category === currentCategory);
+
+        grid.innerHTML = filtered.map(product => `
+            <div onclick="addToCart(${product.id})" class="dish-card bg-white p-3 rounded-2xl shadow hover:shadow-lg cursor-pointer transition duration-200 border border-transparent hover:border-indigo-300 flex flex-col items-center text-center h-40 justify-between select-none">
+                <div class="text-4xl mb-1 transform transition hover:scale-110">${product.emoji}</div>
+                <div class="w-full">
+                    <h3 class="font-bold text-gray-800 leading-tight mb-1 text-xs md:text-sm line-clamp-2">${product.name}</h3>
+                    <p class="text-indigo-600 font-extrabold text-sm">$${product.price.toFixed(2)}</p>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function updateCartUI() {
+        const container = document.getElementById('cart-items');
+        
+        if (cart.length === 0) {
+            container.innerHTML = `
+                <div class="h-full flex flex-col items-center justify-center text-gray-400 opacity-50">
+                    <span class="text-6xl mb-2">🛒</span>
+                    <p>Orden vacía</p>
+                </div>`;
+        } else {
+            container.innerHTML = cart.map((item, index) => `
+                <div class="flex justify-between items-center bg-white p-3 rounded-lg shadow-sm border border-gray-100 animate-fadeIn">
+                    <div class="flex-1">
+                        <h4 class="font-bold text-sm text-gray-800">${item.name}</h4>
+                        <p class="text-xs text-gray-500">$${item.price.toFixed(2)} x ${item.qty}</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <p class="font-bold text-gray-800">$${(item.price * item.qty).toFixed(2)}</p>
+                        <div class="flex flex-col gap-1">
+                            <button onclick="changeQty(${item.id}, 1)" class="w-6 h-6 bg-gray-100 rounded text-xs hover:bg-green-200 text-green-700 font-bold border border-gray-300">+</button>
+                            <button onclick="changeQty(${item.id}, -1)" class="w-6 h-6 bg-gray-100 rounded text-xs hover:bg-red-200 text-red-700 font-bold border border-gray-300">-</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Cálculos
+        const subtotal = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+        const tax = subtotal * 0.16;
+        const total = subtotal + tax;
+
+        document.getElementById('subtotal-display').innerText = formatMoney(subtotal);
+        document.getElementById('tax-display').innerText = formatMoney(tax);
+        document.getElementById('total-display').innerText = formatMoney(total);
+        document.getElementById('btn-total').innerText = formatMoney(total);
+        document.getElementById('modal-total').innerText = formatMoney(total);
+    }
+
+    // --- 4. LÓGICA DEL CARRITO ---
+    function addToCart(id) {
+        const product = products.find(p => p.id === id);
+        const existing = cart.find(c => c.id === id);
+
+        if (existing) {
+            existing.qty++;
+        } else {
+            cart.push({ ...product, qty: 1 });
+        }
+        
+        updateCartUI();
+    }
+
+    function changeQty(id, delta) {
+        const itemIndex = cart.findIndex(c => c.id === id);
+        if (itemIndex === -1) return;
+
+        cart[itemIndex].qty += delta;
+
+        if (cart[itemIndex].qty <= 0) {
+            cart.splice(itemIndex, 1);
+        }
+        updateCartUI();
+    }
+
+    function clearCart() {
+        if(confirm('¿Estás seguro de borrar la orden actual?')) {
+            cart = [];
+            updateCartUI();
+        }
+    }
+
+    // --- 5. PROCESO DE PAGO ---
+    function openCheckout() {
+        if (cart.length === 0) {
+            alert("El carrito está vacío.");
+            return;
+        }
+        document.getElementById('checkout-modal').classList.remove('hidden');
+        document.getElementById('checkout-modal').classList.add('flex');
+    }
+
+    function closeCheckout() {
+        document.getElementById('checkout-modal').classList.add('hidden');
+        document.getElementById('checkout-modal').classList.remove('flex');
+    }
+
+    function processPayment(method) {
+        const total = document.getElementById('total-display').innerText;
+        alert(`✅ PAGO APROBADO\n\nMétodo: ${method}\nTotal: ${total}\n\n¡Imprimiendo recibo!`);
+        
+        cart = [];
+        orderCount++;
+        document.getElementById('order-id').innerText = orderCount.toString().padStart(3, '0');
+        closeCheckout();
+        updateCartUI();
+    }
+
+    function formatMoney(amount) {
+        return '$' + amount.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
+    }
+</script>
+    // --- 1. BASE DE DATOS ACTUALIZADA CON TU MENÚ 2018 ---
+    const products = [
+        // --- DESAYUNOS ---
+        { id: 101, name: "American Breakfast", price: 18.00, category: "breakfast", emoji: "🥞" }, // Precio real del documento 
+        { id: 102, name: "Chilaquiles Rojos/Verdes", price: 15.00, category: "breakfast", emoji: "🌶️" }, // [cite: 32]
+        { id: 103, name: "Waffles con Maple", price: 14.00, category: "breakfast", emoji: "🧇" }, // [cite: 15]
+        { id: 104, name: "Tortilla Española", price: 16.00, category: "breakfast", emoji: "🍳" }, // [cite: 24]
+        { id: 105, name: "French Toast Canela", price: 14.00, category: "breakfast", emoji: "🍞" }, // [cite: 14]
+
+        // --- ALMUERZOS (LUNCH) ---
+        { id: 201, name: "Chicken Caesar Wrap", price: 16.00, category: "lunch", emoji: "🌯" }, // [cite: 42]
+        { id: 202, name: "BBQ Sirloin Burger", price: 18.00, category: "lunch", emoji: "🍔" }, // [cite: 60]
+        { id: 203, name: "Greek Salad", price: 14.00, category: "lunch", emoji: "🥗" }, // [cite: 45]
+        { id: 204, name: "Pescado Veracruz", price: 22.00, category: "lunch", emoji: "🐟" }, // [cite: 74]
+        { id: 205, name: "Pollo Mole", price: 20.00, category: "lunch", emoji: "🍗" }, // [cite: 73]
+        { id: 206, name: "Pasta Primavera", price: 15.00, category: "lunch", emoji: "🍝" }, // Basado en pasta salad [cite: 40]
+
+        // --- CENAS (DINNER) ---
+        { id: 301, name: "Sopa de Tortilla", price: 12.00, category: "dinner", emoji: "🥣" }, // [cite: 84]
+        { id: 302, name: "Chile Relleno", price: 18.00, category: "dinner", emoji: "🌶️" }, // [cite: 88]
+        { id: 303, name: "Filete Tikin Xic", price: 24.00, category: "dinner", emoji: "🐠" }, // [cite: 101]
+        { id: 304, name: "Langosta Caribeña", price: 45.00, category: "dinner", emoji: "🦞" }, // [cite: 134]
+        { id: 305, name: "Medallones de Res", price: 35.00, category: "dinner", emoji: "🥩" }, // [cite: 135]
+        { id: 306, name: "Camarones Louisiana", price: 28.00, category: "dinner", emoji: "🍤" }, // [cite: 112]
+
+        // --- POSTRES ---
+        { id: 401, name: "NY Cheesecake", price: 9.00, category: "dessert", emoji: "🍰" }, // [cite: 124]
+        { id: 402, name: "Tiramisu Shooter", price: 8.00, category: "dessert", emoji: "🍮" }, // [cite: 91]
+        { id: 403, name: "Fresas Shortcake", price: 9.00, category: "dessert", emoji: "🍓" }, // [cite: 123]
+    ];
+
+    const categories = [
+        { id: "all", name: "Todos", icon: "📋" },
+        { id: "breakfast", name: "Desayunos", icon: "🍳" }, // [cite: 2]
+        { id: "lunch", name: "Almuerzos", icon: "☀️" }, // [cite: 34]
+        { id: "dinner", name: "Cenas", icon: "🌙" }, // [cite: 77]
+        { id: "dessert", name: "Postres", icon: "🍰" } // [cite: 89]
+    ];
+
+    let cart = [];
+    let currentCategory = 'all';
+    let orderCount = 1;
+
+    // --- 2. INICIALIZACIÓN ---
+    document.addEventListener('DOMContentLoaded', () => {
+        renderCategories();
+        renderMenu();
+        updateDateTime();
+        setInterval(updateDateTime, 1000);
+    });
+
+    function updateDateTime() {
+        const now = new Date();
+        document.getElementById('datetime').innerText = now.toLocaleDateString('es-MX', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    }
+
+    // --- 3. RENDERIZADO ---
+    function renderCategories() {
+        const container = document.getElementById('category-container');
+        container.innerHTML = categories.map(cat => `
+            <button onclick="filterMenu('${cat.id}')" 
+                class="px-4 py-2 rounded-lg font-semibold text-sm transition 
+                ${currentCategory === cat.id ? 'bg-indigo-600 text-white shadow-md' : 'bg-white text-gray-600 hover:bg-gray-200'}">
+                ${cat.icon} ${cat.name}
+            </button>
+        `).join('');
+    }
+
+    function filterMenu(catId) {
+        currentCategory = catId;
+        renderCategories();
+        renderMenu();
+    }
+
+    function renderMenu() {
+        const grid = document.getElementById('menu-grid');
+        const filtered = currentCategory === 'all' 
+            ? products 
+            : products.filter(p => p.category === currentCategory);
+
+        grid.innerHTML = filtered.map(product => `
+            <div onclick="addToCart(${product.id})" class="dish-card bg-white p-4 rounded-2xl shadow hover:shadow-lg cursor-pointer transition duration-200 border border-transparent hover:border-indigo-300 flex flex-col items-center text-center h-48 justify-between select-none">
+                <div class="text-5xl mb-2 transform transition hover:scale-110">${product.emoji}</div>
+                <div>
+                    <h3 class="font-bold text-gray-800 leading-tight mb-1 text-sm">${product.name}</h3>
+                    <p class="text-indigo-600 font-extrabold">$${product.price.toFixed(2)}</p>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function updateCartUI() {
+        const container = document.getElementById('cart-items');
+        
+        if (cart.length === 0) {
+            container.innerHTML = `
+                <div class="h-full flex flex-col items-center justify-center text-gray-400 opacity-50">
+                    <span class="text-6xl mb-2">🛒</span>
+                    <p>Orden vacía</p>
+                </div>`;
+        } else {
+            container.innerHTML = cart.map((item, index) => `
+                <div class="flex justify-between items-center bg-white p-3 rounded-lg shadow-sm border border-gray-100 animate-fadeIn">
+                    <div class="flex-1">
+                        <h4 class="font-bold text-sm text-gray-800">${item.name}</h4>
+                        <p class="text-xs text-gray-500">$${item.price} x ${item.qty}</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <p class="font-bold text-gray-800">$${(item.price * item.qty).toFixed(2)}</p>
+                        <div class="flex flex-col gap-1">
+                            <button onclick="changeQty(${item.id}, 1)" class="w-6 h-6 bg-gray-200 rounded text-xs hover:bg-green-200 text-green-700 font-bold">+</button>
+                            <button onclick="changeQty(${item.id}, -1)" class="w-6 h-6 bg-gray-200 rounded text-xs hover:bg-red-200 text-red-700 font-bold">-</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Cálculos
+        const subtotal = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+        const tax = subtotal * 0.16;
+        const total = subtotal + tax;
+
+        document.getElementById('subtotal-display').innerText = formatMoney(subtotal);
+        document.getElementById('tax-display').innerText = formatMoney(tax);
+        document.getElementById('total-display').innerText = formatMoney(total);
+        document.getElementById('btn-total').innerText = formatMoney(total);
+        document.getElementById('modal-total').innerText = formatMoney(total);
+    }
+
+    // --- 4. LÓGICA DEL CARRITO ---
+    function addToCart(id) {
+        const product = products.find(p => p.id === id);
+        const existing = cart.find(c => c.id === id);
+
+        if (existing) {
+            existing.qty++;
+        } else {
+            cart.push({ ...product, qty: 1 });
+        }
+        
+        updateCartUI();
+    }
+
+    function changeQty(id, delta) {
+        const itemIndex = cart.findIndex(c => c.id === id);
+        if (itemIndex === -1) return;
+
+        cart[itemIndex].qty += delta;
+
+        if (cart[itemIndex].qty <= 0) {
+            cart.splice(itemIndex, 1);
+        }
+        updateCartUI();
+    }
+
+    function clearCart() {
+        if(confirm('¿Estás seguro de borrar la orden actual?')) {
+            cart = [];
+            updateCartUI();
+        }
+    }
+
+    // --- 5. PROCESO DE PAGO ---
+    function openCheckout() {
+        if (cart.length === 0) {
+            alert("El carrito está vacío.");
+            return;
+        }
+        document.getElementById('checkout-modal').classList.remove('hidden');
+        document.getElementById('checkout-modal').classList.add('flex');
+    }
+
+    function closeCheckout() {
+        document.getElementById('checkout-modal').classList.add('hidden');
+        document.getElementById('checkout-modal').classList.remove('flex');
+    }
+
+    function processPayment(method) {
+        const total = document.getElementById('total-display').innerText;
+        const btnText = method === 'Tarjeta' ? 'Conectando con terminal...' : 'Abriendo cajón...';
+        
+        alert(`✅ PAGO APROBADO\n\nMétodo: ${method}\nTotal: ${total}\n\n¡Imprimiendo recibo!`);
+        
+        cart = [];
+        orderCount++;
+        document.getElementById('order-id').innerText = orderCount.toString().padStart(3, '0');
+        closeCheckout();
+        updateCartUI();
+    }
+
+    function formatMoney(amount) {
+        return '$' + amount.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
+    }
+</script><script>
+    // --- 1. BASE DE DATOS COMPLETA (ALIMENTOS Y BEBIDAS) ---
+    const products = [
+        // --- DESAYUNOS (100) ---
+        { id: 101, name: "American Breakfast", price: 18.00, category: "breakfast", emoji: "🥞" },
+        { id: 102, name: "Chilaquiles Divorciados", price: 15.00, category: "breakfast", emoji: "🥘" },
+        { id: 103, name: "Waffles & Maple", price: 14.00, category: "breakfast", emoji: "🧇" },
+        { id: 104, name: "Tortilla Española", price: 16.00, category: "breakfast", emoji: "🍳" },
+        { id: 105, name: "French Toast", price: 14.00, category: "breakfast", emoji: "🍞" },
+        { id: 106, name: "Fruta de Temporada", price: 10.00, category: "breakfast", emoji: "🍉" },
+
+        // --- ALMUERZOS / LUNCH (200) ---
+        { id: 201, name: "Chicken Caesar Wrap", price: 16.00, category: "lunch", emoji: "🌯" },
+        { id: 202, name: "BBQ Sirloin Burger", price: 18.00, category: "lunch", emoji: "🍔" },
+        { id: 203, name: "Greek Salad", price: 14.00, category: "lunch", emoji: "🥗" },
+        { id: 204, name: "Pescado Veracruz", price: 22.00, category: "lunch", emoji: "🐟" },
+        { id: 205, name: "Pollo Mole", price: 20.00, category: "lunch", emoji: "🍗" },
+        { id: 206, name: "Ceviche Vallarta", price: 18.00, category: "lunch", emoji: "🦐" },
+
+        // --- CENAS / DINNER (300) ---
+        { id: 301, name: "Sopa de Tortilla", price: 12.00, category: "dinner", emoji: "🥣" },
+        { id: 302, name: "Chile Relleno", price: 18.00, category: "dinner", emoji: "🌶️" },
+        { id: 303, name: "Filete Tikin Xic", price: 24.00, category: "dinner", emoji: "🐠" },
+        { id: 304, name: "Langosta Caribeña", price: 45.00, category: "dinner", emoji: "🦞" },
+        { id: 305, name: "Medallones Res", price: 35.00, category: "dinner", emoji: "🥩" },
+        { id: 306, name: "Camarones Louisiana", price: 28.00, category: "dinner", emoji: "🍤" },
+
+        // --- POSTRES (400) ---
+        { id: 401, name: "NY Cheesecake", price: 9.00, category: "dessert", emoji: "🍰" },
+        { id: 402, name: "Tiramisu", price: 8.00, category: "dessert", emoji: "🍮" },
+        { id: 403, name: "Fresas con Crema", price: 9.00, category: "dessert", emoji: "🍓" },
+
+        // --- BEBIDAS SIN ALCOHOL (500) ---
+        { id: 501, name: "Jugo Naranja Fresco", price: 5.00, category: "drinks", emoji: "🍊" },
+        { id: 502, name: "Coca-Cola / Light", price: 3.50, category: "drinks", emoji: "🥤" },
+        { id: 503, name: "Limonada Mineral", price: 4.50, category: "drinks", emoji: "🍋" },
+        { id: 504, name: "Agua Embotellada", price: 3.00, category: "drinks", emoji: "💧" },
+        { id: 505, name: "Café Americano", price: 4.00, category: "drinks", emoji: "☕" },
+
+        // --- BAR / ALCOHOL (600) ---
+        { id: 601, name: "Cerveza Nacional", price: 6.00, category: "bar", emoji: "🍺" },
+        { id: 602, name: "Margarita Clásica", price: 12.00, category: "bar", emoji: "🍸" },
+        { id: 603, name: "Tequila Shot (Don Julio)", price: 10.00, category: "bar", emoji: "🥃" },
+        { id: 604, name: "Copa Vino Tinto", price: 11.00, category: "bar", emoji: "🍷" },
+        { id: 605, name: "Copa Vino Blanco", price: 11.00, category: "bar", emoji: "🥂" },
+    ];
+
+    const categories = [
+        { id: "all", name: "Todo", icon: "📋" },
+        { id: "breakfast", name: "Desayuno", icon: "🍳" },
+        { id: "lunch", name: "Almuerzo", icon: "☀️" },
+        { id: "dinner", name: "Cena", icon: "🌙" },
+        { id: "dessert", name: "Postre", icon: "🍰" },
+        { id: "drinks", name: "Bebidas", icon: "🥤" }, // Nueva categoría
+        { id: "bar", name: "Bar/Alcohol", icon: "🍺" }  // Nueva categoría
+    ];
+
+    let cart = [];
+    let currentCategory = 'all';
+    let orderCount = 1;
+
+    // --- 2. INICIALIZACIÓN ---
+    document.addEventListener('DOMContentLoaded', () => {
+        renderCategories();
+        renderMenu();
+        updateDateTime();
+        setInterval(updateDateTime, 1000);
+    });
+
+    function updateDateTime() {
+        const now = new Date();
+        document.getElementById('datetime').innerText = now.toLocaleDateString('es-MX', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    }
+
+    // --- 3. RENDERIZADO ---
+    function renderCategories() {
+        const container = document.getElementById('category-container');
+        container.innerHTML = categories.map(cat => `
+            <button onclick="filterMenu('${cat.id}')" 
+                class="px-4 py-2 rounded-lg font-semibold text-sm transition whitespace-nowrap
+                ${currentCategory === cat.id ? 'bg-indigo-600 text-white shadow-md' : 'bg-white text-gray-600 hover:bg-gray-200'}">
+                ${cat.icon} ${cat.name}
+            </button>
+        `).join('');
+    }
+
+    function filterMenu(catId) {
+        currentCategory = catId;
+        renderCategories();
+        renderMenu();
+    }
+
+    function renderMenu() {
+        const grid = document.getElementById('menu-grid');
+        const filtered = currentCategory === 'all' 
+            ? products 
+            : products.filter(p => p.category === currentCategory);
+
+        grid.innerHTML = filtered.map(product => `
+            <div onclick="addToCart(${product.id})" class="dish-card bg-white p-3 rounded-2xl shadow hover:shadow-lg cursor-pointer transition duration-200 border border-transparent hover:border-indigo-300 flex flex-col items-center text-center h-40 justify-between select-none">
+                <div class="text-4xl mb-1 transform transition hover:scale-110">${product.emoji}</div>
+                <div class="w-full">
+                    <h3 class="font-bold text-gray-800 leading-tight mb-1 text-xs md:text-sm line-clamp-2">${product.name}</h3>
+                    <p class="text-indigo-600 font-extrabold text-sm">$${product.price.toFixed(2)}</p>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function updateCartUI() {
+        const container = document.getElementById('cart-items');
+        
+        if (cart.length === 0) {
+            container.innerHTML = `
+                <div class="h-full flex flex-col items-center justify-center text-gray-400 opacity-50">
+                    <span class="text-6xl mb-2">🛒</span>
+                    <p>Orden vacía</p>
+                </div>`;
+        } else {
+            container.innerHTML = cart.map((item, index) => `
+                <div class="flex justify-between items-center bg-white p-3 rounded-lg shadow-sm border border-gray-100 animate-fadeIn">
+                    <div class="flex-1">
+                        <h4 class="font-bold text-sm text-gray-800">${item.name}</h4>
+                        <p class="text-xs text-gray-500">$${item.price.toFixed(2)} x ${item.qty}</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <p class="font-bold text-gray-80
+</body>
+</html>

@@ -1,0 +1,496 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Formulario — Selector de idioma y habitaciones</title>
+    <style>
+        :root {
+            font-family: system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial;
+        }
+
+        body {
+            margin: 0;
+            padding: 1rem;
+            background: #f7f7fb;
+            color: #222
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 1.25rem;
+            border-radius: 8px;
+            box-shadow: 0 6px 18px rgba(20, 20, 60, .06)
+        }
+
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between
+        }
+
+        h1 {
+            margin: .25rem 0
+        }
+
+        nav#menu {
+            position: fixed;
+            top: 0;
+            right: -320px;
+            width: 300px;
+            height: 100%;
+            background: #0b74ff;
+            color: white;
+            padding: 1rem;
+            box-shadow: -6px 0 30px rgba(3, 10, 40, .3);
+            transition: right .28s ease
+        }
+
+        nav#menu.open {
+            right: 0
+        }
+
+        nav#menu a {
+            display: block;
+            color: white;
+            text-decoration: none;
+            margin: .6rem 0
+        }
+
+        .menu-toggle {
+            background: #0b74ff;
+            color: #fff;
+            padding: .45rem .75rem;
+            border-radius: 6px;
+            border: 0;
+            cursor: pointer
+        }
+
+        form {
+            margin-top: 1rem;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: .75rem
+        }
+
+        label {
+            font-size: .9rem;
+            margin-bottom: .25rem;
+            display: block
+        }
+
+        input[type="text"],
+        input[type="email"],
+        select {
+            width: 100%;
+            padding: .55rem;
+            border-radius: 6px;
+            border: 1px solid #d9d9e0
+        }
+
+        .full {
+            grid-column: 1/-1
+        }
+
+        .rooms {
+            border: 1px dashed #e3e3ef;
+            padding: .6rem;
+            border-radius: 8px;
+            background: #fbfbff
+        }
+
+        .room-row {
+            display: flex;
+            gap: .5rem;
+            align-items: center;
+            margin-bottom: .5rem
+        }
+
+        .room-row input[type="text"] {
+            flex: 1
+        }
+
+        .btn {
+            padding: .5rem .65rem;
+            border-radius: 6px;
+            border: 0;
+            cursor: pointer
+        }
+
+        .btn-primary {
+            background: #0b74ff;
+            color: #fff
+        }
+
+        .btn-ghost {
+            background: transparent;
+            border: 1px solid #d9d9e0
+        }
+
+        footer {
+            margin-top: 1rem;
+            text-align: right;
+            font-size: .9rem;
+            color: #666
+        }
+
+        .lang-select {
+            margin-left: .5rem
+        }
+
+        small.helper {
+            display: block;
+            color: #666;
+            margin-top: .3rem
+        }
+    </style>
+</head>
+
+<body>
+    <nav id="menu" aria-hidden="true" aria-label="Menú principal">
+        <h2 id="menu-title">Menú</h2>
+        <a href="#reservar" id="menu-link-book">Reservar</a>
+        <a href="#contacto" id="menu-link-contact">Contacto</a>
+        <a href="#ayuda" id="menu-link-help">Ayuda</a>
+        <button class="btn btn-ghost" id="close-menu">Cerrar</button>
+    </nav>
+
+    <div class="container">
+        <header>
+            <h1 id="page-title">Formulario de reserva</h1>
+            <div>
+                <!-- Botón que abre el menú -->
+                <button class="menu-toggle" id="open-menu" aria-controls="menu" aria-expanded="false">Abrir
+                    menú</button>
+
+                <!-- Selector de idioma -->
+                <label for="lang" style="display:inline-block;margin-left:.5rem;">Idioma:</label>
+                <select id="lang" class="lang-select" aria-label="Selector de idioma">
+                    <option value="es" selected>Español</option>
+                    <option value="en">English</option>
+                    <option value="fr">Français</option>
+                </select>
+            </div>
+        </header>
+
+        <!-- Formulario: los textos serán traducidos dinámicamente según el selector -->
+        <form id="reservation-form" novalidate>
+            <div class="full">
+                <label for="guest-name" id="label-name">Nombre completo</label>
+                <input type="text" id="guest-name" name="guest_name" placeholder="Ingresa tu nombre" required>
+            </div>
+
+            <div>
+                <label for="guest-email" id="label-email">Correo electrónico</label>
+                <input type="email" id="guest-email" name="guest_email" placeholder="tu@ejemplo.com" required>
+            </div>
+
+            <div>
+                <label for="phone" id="label-phone">Teléfono</label>
+                <input type="text" id="phone" name="phone" placeholder="+34 600 000 000">
+            </div>
+
+            <div class="full">
+                <label id="label-rooms">Designación de habitaciones</label>
+                <div class="rooms" id="rooms-container" aria-live="polite">
+                    <!-- Filas de habitaciones se añadirán aquí -->
+                    <div class="room-row" data-index="0">
+                        <input type="text" name="room_0_name" class="room-name" placeholder="Ej. Habitación doble">
+                        <select name="room_0_type" class="room-type">
+                            <option value="single">Individual</option>
+                            <option value="double" selected>Doble</option>
+                            <option value="suite">Suite</option>
+                        </select>
+                        <input type="text" name="room_0_notes" class="room-notes" placeholder="Notas (opcional)">
+                        <button type="button" class="btn btn-ghost remove-room" title="Eliminar habitación">✕</button>
+                    </div>
+                </div>
+
+                <div style="margin-top:.5rem;">
+                    <button type="button" id="add-room" class="btn btn-primary">Añadir habitación</button>
+                    <small class="helper" id="rooms-helper">Puedes añadir o eliminar habitaciones según
+                        necesidad.</small>
+                </div>
+            </div>
+
+            <div class="full">
+                <label for="comments" id="label-comments">Comentarios</label>
+                <input type="text" id="comments" name="comments" placeholder="¿Alguna petición especial?">
+            </div>
+
+            <div class="full" style="display:flex;gap:.5rem;justify-content:flex-end">
+                <button type="submit" class="btn btn-primary" id="submit-btn">Enviar reserva</button>
+                <button type="reset" class="btn btn-ghost" id="reset-btn">Limpiar</button>
+            </div>
+        </form>
+
+        <footer>
+            <small id="footer-text">© 2025 Tu alojamiento</small>
+        </footer>
+    </div>
+
+    <script>
+        // Traducciones para inglés (en), español (es), francés (fr)
+        const translations = {
+            es: {
+                pageTitle: "Formulario de reserva",
+                menuTitle: "Menú",
+                menuBook: "Reservar",
+                menuContact: "Contacto",
+                menuHelp: "Ayuda",
+                openMenu: "Abrir menú",
+                closeMenu: "Cerrar",
+                labelName: "Nombre completo",
+                namePlaceholder: "Ingresa tu nombre",
+                labelEmail: "Correo electrónico",
+                emailPlaceholder: "tu@ejemplo.com",
+                labelPhone: "Teléfono",
+                labelRooms: "Designación de habitaciones",
+                addRoom: "Añadir habitación",
+                roomsHelper: "Puedes añadir o eliminar habitaciones según necesidad.",
+                roomPlaceHolderName: "Ej. Habitación doble",
+                roomTypeSingle: "Individual",
+                roomTypeDouble: "Doble",
+                roomTypeSuite: "Suite",
+                labelComments: "Comentarios",
+                commentsPlaceholder: "¿Alguna petición especial?",
+                submit: "Enviar reserva",
+                reset: "Limpiar",
+                footer: "© 2025 Tu alojamiento",
+                removeRoomTitle: "Eliminar habitación"
+            },
+            en: {
+                pageTitle: "Booking form",
+                menuTitle: "Menu",
+                menuBook: "Book",
+                menuContact: "Contact",
+                menuHelp: "Help",
+                openMenu: "Open menu",
+                closeMenu: "Close",
+                labelName: "Full name",
+                namePlaceholder: "Enter your name",
+                labelEmail: "Email",
+                emailPlaceholder: "you@example.com",
+                labelPhone: "Phone",
+                labelRooms: "Room assignment",
+                addRoom: "Add room",
+                roomsHelper: "Add or remove rooms as needed.",
+                roomPlaceHolderName: "e.g. Double room",
+                roomTypeSingle: "Single",
+                roomTypeDouble: "Double",
+                roomTypeSuite: "Suite",
+                labelComments: "Comments",
+                commentsPlaceholder: "Any special requests?",
+                submit: "Send booking",
+                reset: "Clear",
+                footer: "© 2025 Your property",
+                removeRoomTitle: "Remove room"
+            },
+            fr: {
+                pageTitle: "Formulaire de réservation",
+                menuTitle: "Menu",
+                menuBook: "Réserver",
+                menuContact: "Contact",
+                menuHelp: "Aide",
+                openMenu: "Ouvrir le menu",
+                closeMenu: "Fermer",
+                labelName: "Nom complet",
+                namePlaceholder: "Entrez votre nom",
+                labelEmail: "Courriel",
+                emailPlaceholder: "vous@exemple.com",
+                labelPhone: "Téléphone",
+                labelRooms: "Désignation des chambres",
+                addRoom: "Ajouter une chambre",
+                roomsHelper: "Ajoutez ou supprimez des chambres selon vos besoins.",
+                roomPlaceHolderName: "ex. Chambre double",
+                roomTypeSingle: "Simple",
+                roomTypeDouble: "Double",
+                roomTypeSuite: "Suite",
+                labelComments: "Commentaires",
+                commentsPlaceholder: "Des demandes particulières ?",
+                submit: "Envoyer la réservation",
+                reset: "Effacer",
+                footer: "© 2025 Votre hébergement",
+                removeRoomTitle: "Supprimer la chambre"
+            }
+        };
+
+        // Elementos
+        const langSelect = document.getElementById('lang');
+        const openMenuBtn = document.getElementById('open-menu');
+        const closeMenuBtn = document.getElementById('close-menu');
+        const menu = document.getElementById('menu');
+
+        // Traduce toda la UI según idioma seleccionado
+        function applyTranslations(lang) {
+            const t = translations[lang] || translations.es;
+
+            document.getElementById('page-title').textContent = t.pageTitle;
+            document.getElementById('menu-title').textContent = t.menuTitle;
+            document.getElementById('menu-link-book').textContent = t.menuBook;
+            document.getElementById('menu-link-contact').textContent = t.menuContact;
+            document.getElementById('menu-link-help').textContent = t.menuHelp;
+
+            openMenuBtn.textContent = t.openMenu;
+            closeMenuBtn.textContent = t.closeMenu;
+
+            document.getElementById('label-name').textContent = t.labelName;
+            document.getElementById('guest-name').placeholder = t.namePlaceholder;
+
+            document.getElementById('label-email').textContent = t.labelEmail;
+            document.getElementById('guest-email').placeholder = t.emailPlaceholder;
+
+            document.getElementById('label-phone').textContent = t.labelPhone;
+
+            document.getElementById('label-rooms').textContent = t.labelRooms;
+            document.getElementById('add-room').textContent = t.addRoom;
+            document.getElementById('rooms-helper').textContent = t.roomsHelper;
+
+            document.getElementById('label-comments').textContent = t.labelComments;
+            document.getElementById('comments').placeholder = t.commentsPlaceholder;
+
+            document.getElementById('submit-btn').textContent = t.submit;
+            document.getElementById('reset-btn').textContent = t.reset;
+            document.getElementById('footer-text').textContent = t.footer;
+
+            // Actualiza textos de filas de habitaciones (placeholders y opciones)
+            document.querySelectorAll('#rooms-container .room-row').forEach((row) => {
+                const nameInput = row.querySelector('.room-name');
+                const typeSelect = row.querySelector('.room-type');
+                const removeBtn = row.querySelector('.remove-room');
+
+                if (nameInput) nameInput.placeholder = t.roomPlaceHolderName;
+                if (removeBtn) removeBtn.title = t.removeRoomTitle || t.removeRoomTitle;
+
+                // Actualiza opciones del select manteniendo selección si existía
+                const selected = typeSelect.value || 'double';
+                typeSelect.innerHTML = `
+          <option value="single">${t.roomTypeSingle}</option>
+          <option value="double">${t.roomTypeDouble}</option>
+          <option value="suite">${t.roomTypeSuite}</option>
+        `;
+                typeSelect.value = selected;
+            });
+        }
+
+        // Manejo de menú: abre/cierra accesible
+        function openMenu() {
+            menu.classList.add('open');
+            menu.setAttribute('aria-hidden', 'false');
+            openMenuBtn.setAttribute('aria-expanded', 'true');
+        }
+        function closeMenu() {
+            menu.classList.remove('open');
+            menu.setAttribute('aria-hidden', 'true');
+            openMenuBtn.setAttribute('aria-expanded', 'false');
+        }
+
+        openMenuBtn.addEventListener('click', () => {
+            const open = menu.classList.contains('open');
+            if (open) closeMenu(); else openMenu();
+        });
+        closeMenuBtn.addEventListener('click', closeMenu);
+
+        // Agregar y eliminar habitaciones dinámicamente
+        let roomIndex = document.querySelectorAll('#rooms-container .room-row').length;
+
+        function createRoomRow(index) {
+            const div = document.createElement('div');
+            div.className = 'room-row';
+            div.dataset.index = index;
+            div.innerHTML = `
+        <input type="text" name="room_${index}_name" class="room-name" placeholder="">
+        <select name="room_${index}_type" class="room-type">
+          <option value="single">Individual</option>
+          <option value="double">Doble</option>
+          <option value="suite">Suite</option>
+        </select>
+        <input type="text" name="room_${index}_notes" class="room-notes" placeholder="">
+        <button type="button" class="btn btn-ghost remove-room" title="Eliminar habitación">✕</button>
+      `;
+            // Añadir listener para eliminar
+            div.querySelector('.remove-room').addEventListener('click', () => {
+                div.remove();
+            });
+            return div;
+        }
+
+        document.getElementById('add-room').addEventListener('click', () => {
+            const container = document.getElementById('rooms-container');
+            const newRow = createRoomRow(roomIndex++);
+            container.appendChild(newRow);
+            applyTranslations(langSelect.value); // aplica placeholders traducidos
+            newRow.querySelector('.room-name').focus();
+        });
+
+        // Delegación para botones de eliminar en filas existentes
+        document.getElementById('rooms-container').addEventListener('click', (e) => {
+            if (e.target.classList.contains('remove-room')) {
+                const row = e.target.closest('.room-row');
+                if (row) row.remove();
+            }
+        });
+
+        // Cuando cambia el idioma, aplicar traducción
+        langSelect.addEventListener('change', () => {
+            applyTranslations(langSelect.value);
+        });
+
+        // Form submit: ejemplo de manejo (evitar recarga y mostrar datos en consola)
+        document.getElementById('reservation-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const form = e.target;
+            const data = new FormData(form);
+            const obj = {};
+            for (const [k, v] of data.entries()) {
+                // Agrupar habitaciones en un array si empiezan por room_
+                if (k.startsWith('room_')) {
+                    obj.rooms = obj.rooms || [];
+                    // guardar raw, puedes parsear el index y campo si lo necesitas
+                    obj.rooms.push({ key: k, value: v });
+                } else {
+                    obj[k] = v;
+                }
+            }
+            // Aquí podrías enviar por fetch a tu endpoint o guardarlo donde prefieras
+            console.log('Formulario enviado (simulado):', obj);
+            alert(translations[langSelect.value].submit + ' ✓');
+            form.reset();
+            // restaurar 1 fila de habitación por defecto
+            const roomsContainer = document.getElementById('rooms-container');
+            roomsContainer.innerHTML = '';
+            roomIndex = 0;
+            roomsContainer.appendChild(createRoomRow(roomIndex++));
+            applyTranslations(langSelect.value);
+        });
+
+        // Inicializar traducción con el idioma actual del selector (por defecto 'es')
+        applyTranslations(langSelect.value);
+
+        // Cerrar menú con Escape y clic fuera
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeMenu();
+        });
+        document.addEventListener('click', (e) => {
+            const target = e.target;
+            if (!menu.contains(target) && target !== openMenuBtn && menu.classList.contains('open')) {
+                closeMenu();
+            }
+        });
+
+        // Mejora: si quieres que la selección de idioma se recuerde en localStorage:
+        const savedLang = localStorage.getItem('site_lang');
+        if (savedLang) {
+            langSelect.value = savedLang;
+            applyTranslations(savedLang);
+        }
+        langSelect.addEventListener('change', () => {
+            localStorage.setItem('site_lang', langSelect.value);
+        });
+    </script>
+</body>
+
+</html>
