@@ -1,0 +1,393 @@
+ <!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CV Profesional - Chef Franko Salgado</title>
+    <!-- Carga de Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Fuente personalizada */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6; /* bg-gray-100 */
+        }
+        /* Para un buen aspecto en la impresión */
+        @media print {
+            body {
+                background-color: #ffffff;
+            }
+            .no-print {
+                display: none;
+            }
+            .print-shadow-none {
+                box-shadow: none;
+            }
+            .print-break-inside-avoid {
+                break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body class="flex justify-center p-4 md:p-8">
+
+    <!-- Contenedor principal del CV -->
+    <div class="bg-white shadow-xl rounded-2xl w-full max-w-4xl min-h-screen relative print-shadow-none">
+
+        <!-- Selector de Idioma (Oculto al imprimir) -->
+        <div class="absolute top-6 right-6 no-print">
+            <select id="languageSwitcher" class="text-sm border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                <option value="es">Español (ES)</option>
+                <option value="en">English (EN)</option>
+                <option value="fr">Français (FR)</option>
+            </select>
+        </div>
+        
+        <!-- Grid principal del CV -->
+        <div class="grid grid-cols-1 md:grid-cols-3">
+
+            <!-- Columna Izquierda (Sidebar) -->
+            <div class="md:col-span-1 bg-gray-800 text-white p-8 rounded-t-2xl md:rounded-l-2xl md:rounded-t-none">
+                
+                <!-- Foto de Perfil -->
+                <img src="image_c59a63.jpg" alt="Foto de perfil de Chef Franko Salgado" class="w-32 h-32 rounded-full mx-auto md:mx-0 object-cover shadow-lg mb-6" onerror="this.style.display='none'">
+
+                <!-- Nombre y Título -->
+                <div class="text-center md:text-left"> <!-- Eliminado pt-10 md:pt-0 -->
+                    <h1 data-key="name" class="text-4xl font-bold text-white"></h1>
+                    <h2 data-key="title" class="text-xl font-light text-blue-300 mt-1"></h2>
+                </div>
+
+                <!-- Contacto -->
+                <div class="mt-10">
+                    <h3 data-key="contact_title" class="text-lg font-semibold uppercase border-b border-blue-300 pb-2"></h3>
+                    <ul class="space-y-4 mt-4 text-sm">
+                        <li class="flex items-center">
+                            <!-- Icono de Teléfono -->
+                            <svg class="w-5 h-5 mr-3 text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
+                            <span data-key="contact_phone"></span>
+                        </li>
+                        <li class="flex items-center">
+                            <!-- Icono de Email -->
+                            <svg class="w-5 h-5 mr-3 text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                            <span data-key="contact_email"></span>
+                        </li>
+                        <li class="flex items-center">
+                            <!-- Icono de LinkedIn -->
+                            <svg class="w-5 h-5 mr-3 text-blue-300" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"></path></svg>
+                            <span data-key="contact_linkedin">[Tu Perfil de LinkedIn]</span>
+                        </li>
+                        <li class="flex items-center">
+                            <!-- Icono de Ubicación -->
+                            <svg class="w-5 h-5 mr-3 text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                            <span data-key="contact_location"></span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Habilidades -->
+                <div class="mt-10">
+                    <h3 data-key="skills_title" class="text-lg font-semibold uppercase border-b border-blue-300 pb-2"></h3>
+                    <div class="flex flex-wrap gap-2 mt-4">
+                        <span data-key="skill1" class="text-xs bg-blue-200 text-blue-800 font-medium px-3 py-1 rounded-full"></span>
+                        <span data-key="skill2" class="text-xs bg-blue-200 text-blue-800 font-medium px-3 py-1 rounded-full"></span>
+                        <span data-key="skill3" class="text-xs bg-blue-200 text-blue-800 font-medium px-3 py-1 rounded-full"></span>
+                        <span data-key="skill4" class="text-xs bg-blue-200 text-blue-800 font-medium px-3 py-1 rounded-full"></span>
+                        <span data-key="skill5" class="text-xs bg-blue-200 text-blue-800 font-medium px-3 py-1 rounded-full"></span>
+                        <span data-key="skill6" class="text-xs bg-blue-200 text-blue-800 font-medium px-3 py-1 rounded-full"></span>
+                        <!-- Nuevas habilidades añadidas -->
+                        <span data-key="skill7" class="text-xs bg-green-200 text-green-800 font-medium px-3 py-1 rounded-full"></span>
+                        <span data-key="skill8" class="text-xs bg-green-200 text-green-800 font-medium px-3 py-1 rounded-full"></span>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Columna Derecha (Contenido Principal) -->
+            <div class="md:col-span-2 p-8">
+
+                <!-- Perfil Profesional -->
+                <section class="print-break-inside-avoid">
+                    <h2 data-key="profile_title" class="text-2xl font-bold text-gray-800 border-b-2 border-gray-300 pb-2"></h2>
+                    <p data-key="profile_desc" class="text-gray-600 mt-4"></p>
+                </section>
+
+                <!-- Insignias y Reconocimientos -->
+                <section class="mt-8 print-break-inside-avoid">
+                    <h2 data-key="badges_title" class="text-2xl font-bold text-gray-800 border-b-2 border-gray-300 pb-2"></h2>
+                    <div class="mt-4 space-y-4">
+                        <div>
+                            <h3 data-key="badge1_title" class="text-lg font-semibold text-blue-700"></h3>
+                            <p data-key="badge1_desc" class="text-sm text-gray-600"></p>
+                        </div>
+                        <div>
+                            <h3 data-key="badge2_title" class="text-lg font-semibold text-blue-700"></h3>
+                            <p data-key="badge2_desc" class="text-sm text-gray-600"></p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Experiencia Profesional -->
+                <section class="mt-8 print-break-inside-avoid">
+                    <h2 data-key="exp_title" class="text-2xl font-bold text-gray-800 border-b-2 border-gray-300 pb-2"></h2>
+                    <div class="mt-4 space-y-6">
+                        <!-- Experiencia 1 -->
+                        <div>
+                            <div class="flex justify-between items-baseline">
+                                <h3 data-key="job1_title" class="text-xl font-semibold text-gray-700"></h3>
+                                <span data-key="job1_date" class="text-sm text-gray-500 font-medium"></span>
+                            </div>
+                            <h4 data-key="job1_company" class="text-md font-medium text-blue-700"></h4>
+                            <ul class="list-disc list-inside text-gray-600 mt-2 space-y-1">
+                                <li data-key="job1_resp1"></li>
+                                <li data-key="job1_resp2"></li>
+                                <li data-key="job1_resp3"></li>
+                            </ul>
+                        </div>
+                        <!-- Experiencia 2 -->
+                        <div>
+                            <div class="flex justify-between items-baseline">
+                                <h3 data-key="job2_title" class="text-xl font-semibold text-gray-700"></h3>
+                                <span data-key="job2_date" class="text-sm text-gray-500 font-medium"></span>
+                            </div>
+                            <h4 data-key="job2_company" class="text-md font-medium text-blue-700"></h4>
+                            <ul class="list-disc list-inside text-gray-600 mt-2 space-y-1">
+                                <li data-key="job2_resp1"></li>
+                                <li data-key="job2_resp2"></li>
+                            </ul>
+                        </div>
+                        <!-- Experiencia 3 -->
+                        <div>
+                            <div class="flex justify-between items-baseline">
+                                <h3 data-key="job3_title" class="text-xl font-semibold text-gray-700"></h3>
+                                <span data-key="job3_date" class="text-sm text-gray-500 font-medium"></span>
+                            </div>
+                            <h4 data-key="job3_company" class="text-md font-medium text-blue-700"></h4>
+                            <ul class="list-disc list-inside text-gray-600 mt-2 space-y-1">
+                                <li data-key="job3_resp1"></li>
+                                <li data-key="job3_resp2"></li>
+                                <li data-key="job3_resp3"></li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Formación Académica -->
+                <section class="mt-8 print-break-inside-avoid">
+                    <h2 data-key="edu_title" class="text-2xl font-bold text-gray-800 border-b-2 border-gray-300 pb-2"></h2>
+                    <div class="mt-4 space-y-4">
+                        <!-- Formación 1 -->
+                        <div>
+                            <div class="flex justify-between items-baseline">
+                                <h3 data-key="edu1_title" class="text-xl font-semibold text-gray-700"></h3>
+                                <span data-key="edu1_date" class="text-sm text-gray-500 font-medium"></span>
+                            </div>
+                            <h4 data-key="edu1_school" class="text-md font-medium text-blue-700"></h4>
+                        </div>
+                        <!-- Formación 2 -->
+                        <div>
+                            <div class="flex justify-between items-baseline">
+                                <h3 data-key="edu2_title" class="text-xl font-semibold text-gray-700"></h3>
+                                <span data-key="edu2_date" class="text-sm text-gray-500 font-medium"></span>
+                            </div>
+                            <h4 data-key="edu2_school" class="text-md font-medium text-blue-700"></h4>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        const languageSwitcher = document.getElementById('languageSwitcher');
+
+        // --- Definiciones de Traducción ---
+        const translations = {
+            es: {
+                name: "Chef Franko Salgado",
+                title: "Chef Ejecutivo Internacional",
+                contact_title: "Contacto",
+                contact_phone: "+52 322 160 6843",
+                contact_email: "FRANKOCHEF@GMAIL.COM",
+                contact_linkedin: "[Tu Perfil de LinkedIn]",
+                contact_location: "Nuevo Vallarta, México",
+                skills_title: "Habilidades Clave",
+                skill1: "Cocina Francesa",
+                skill2: "Cocina Italiana",
+                skill3: "Cocina Española",
+                skill4: "Cocina Molecular",
+                skill5: "Experiencias Gastronómicas Privadas",
+                skill6: "Gestión de Cocina y Costos",
+                skill7: "Programación (Básico)",
+                skill8: "Marketing Digital",
+                profile_title: "Perfil Profesional",
+                profile_desc: "Chef Ejecutivo originario de Costa Rica (1983) con una trayectoria internacional de élite. Graduado de la Universidad Interamericana y con formación en Le Cordon Bleu. Especializado en cocina Francesa, Italiana y Molecular, con experiencia en restaurantes 7-diamantes y galardonado con la Medalla a la Excelencia. Actualmente liderando la aclamada cocina de Verano P.V. Estate.",
+                badges_title: "Insignias y Reconocimientos",
+                badge1_title: "Medalla a la Excelencia",
+                badge1_desc: "Otorgada por Gerard Dupont y Hugo Lombardi (durante la estancia en Tabacom Resort).",
+                badge2_title: "RAPSOL STARS (Mención)",
+                badge2_desc: "Experiencia en Prietta Marea Beach Club (Four Season Papagayo) junto a chefs galardonados.",
+                exp_title: "Experiencia Profesional",
+                job1_title: "Executive Chef",
+                job1_date: "Actualidad",
+                job1_company: "VERANO P.V. ESTATE & BEACH FRONT VILLA, Pto. Vallarta",
+                job1_resp1: "Liderazgo de la experiencia gastronómica #1 en Tripadvisor por 3 años consecutivos.",
+                job1_resp2: "Creación de menús internacionales variados, cocina local y maridajes premium.",
+                job1_resp3: "Gestión de cocina para huéspedes de alto perfil en villas frente al mar.",
+                job2_title: "Chef Docente & Chef en D'Cortes",
+                job2_date: "Anterior",
+                job2_company: "Instituto Gastronómico Vallarta & D'Cortes, México",
+                job2_resp1: "Formación de nuevas generaciones de chefs en el Instituto Gastronómico.",
+                job2_resp2: "Colaboración con el Chef Leopoldo Cortés.",
+                job3_title: "Chef Ejecutivo / Sous Chef / Chef de Partie",
+                job3_date: "Internacional",
+                job3_company: "Four Season (Colombia & Costa Rica), Real InterContinental, Old Nü",
+                job3_resp1: "Apertura de restaurante 7-diamantes en Bogotá (Four Season).",
+                job3_resp2: "Innovación en cocina molecular (Restaurant Old Nü).",
+                job3_resp3: "Experiencia en alta cocina (Pasantía en Astrid & Gaston, Perú).",
+                edu_title: "Formación",
+                edu1_title: "Maestría (Estudios)",
+                edu1_date: "---",
+                edu1_school: "Le Cordon Bleu",
+                edu2_title: "Licenciatura (Graduado)",
+                edu2_date: "---",
+                edu2_school: "Universidad Interamericana, Costa Rica"
+            },
+            en: {
+                name: "Chef Franko Salgado",
+                title: "International Executive Chef",
+                contact_title: "Contact",
+                contact_phone: "+52 322 160 6843",
+                contact_email: "FRANKOCHEF@GMAIL.COM",
+                contact_linkedin: "[Your LinkedIn Profile]",
+                contact_location: "Nuevo Vallarta, Mexico",
+                skills_title: "Key Skills",
+                skill1: "French Cuisine",
+                skill2: "Italian Cuisine",
+                skill3: "Spanish Cuisine",
+                skill4: "Molecular Gastronomy",
+                skill5: "Private Dining Experiences",
+                skill6: "Kitchen & Cost Management",
+                skill7: "Programming (Basic)",
+                skill8: "Digital Marketing",
+                profile_title: "Professional Profile",
+                profile_desc: "Executive Chef from Costa Rica (1983) with an elite international career. Graduated from Universidad Interamericana and trained at Le Cordon Bleu. Specializing in French, Italian, and Molecular cuisine, with experience in 7-diamond restaurants and awarded the Medal of Excellence. Currently leading the acclaimed cuisine at Verano P.V. Estate.",
+                badges_title: "Badges & Recognitions",
+                badge1_title: "Medal of Excellence",
+                badge1_desc: "Awarded by Gerard Dupont and Hugo Lombardi (during tenure at Tabacom Resort).",
+                badge2_title: "RAPSOL STARS (Mention)",
+                badge2_desc: "Experience at Prietta Marea Beach Club (Four Season Papagayo) alongside awarded chefs.",
+                exp_title: "Professional Experience",
+                job1_title: "Executive Chef",
+                job1_date: "Present",
+                job1_company: "VERANO P.V. ESTATE & BEACH FRONT VILLA, Pto. Vallarta",
+                job1_resp1: "Leading the #1 rated dining experience on Tripadvisor for 3 consecutive years.",
+                job1_resp2: "Creation of varied international menus, local cuisine, and premium pairings.",
+                job1_resp3: "Kitchen management for high-profile guests in beachfront villas.",
+                job2_title: "Chef Instructor & Chef at D'Cortes",
+                job2_date: "Previous",
+                job2_company: "Instituto Gastronómico Vallarta & D'Cortes, Mexico",
+                job2_resp1: "Training new generations of chefs at the Gastronomic Institute.",
+                job2_resp2: "Collaboration with Chef Leopoldo Cortés.",
+                job3_title: "Executive Chef / Sous Chef / Chef de Partie",
+                job3_date: "International",
+                job3_company: "Four Season (Colombia & Costa Rica), Real InterContinental, Old Nü",
+                job3_resp1: "Opening of a 7-diamond restaurant in Bogotá (Four Season).",
+                job3_resp2: "Innovation in molecular cuisine (Restaurant Old Nü).",
+                job3_resp3: "Haute cuisine experience (Internship at Astrid & Gaston, Peru).",
+                edu_title: "Education",
+                edu1_title: "Master's Degree (Studies)",
+                edu1_date: "---",
+                edu1_school: "Le Cordon Bleu",
+                edu2_title: "Bachelor's Degree (Graduate)",
+                edu2_date: "---",
+                edu2_school: "Universidad Interamericana, Costa Rica"
+            },
+            fr: {
+                name: "Chef Franko Salgado",
+                title: "Chef Exécutif International",
+                contact_title: "Contact",
+                contact_phone: "+52 322 160 6843",
+                contact_email: "FRANKOCHEF@GMAIL.COM",
+                contact_linkedin: "[Votre Profil LinkedIn]",
+                contact_location: "Nuevo Vallarta, Mexique",
+                skills_title: "Compétences Clés",
+                skill1: "Cuisine Française",
+                skill2: "Cuisine Italienne",
+                skill3: "Cuisine Espagnole",
+                skill4: "Gastronomie Moléculaire",
+                skill5: "Expériences Culinaires Privées",
+                skill6: "Gestion de Cuisine et Coûts",
+                skill7: "Programmation (Basique)",
+                skill8: "Marketing Numérique",
+                profile_title: "Profil Professionnel",
+                profile_desc: "Chef Exécutif originaire du Costa Rica (1983) avec une carrière internationale d'élite. Diplômé de l'Universidad Interamericana et formé à Le Cordon Bleu. Spécialisé en cuisine française, italienne et moléculaire, avec une expérience dans des restaurants 7 diamants et récompensé par la Médaille d'Excellence. Dirige smelly la cuisine renommée de Verano P.V. Estate.",
+                badges_title: "Insignes et Reconnaissances",
+                badge1_title: "Médaille d'Excellence",
+                badge1_desc: "Décernée par Gerard Dupont et Hugo Lombardi (pendant son mandat au Tabacom Resort).",
+                badge2_title: "RAPSOL STARS (Mention)",
+                badge2_desc: "Expérience au Prietta Marea Beach Club (Four Season Papagayo) aux côtés de chefs primés.",
+                exp_title: "Expérience Professionnelle",
+                job1_title: "Executive Chef",
+                job1_date: "Actuel",
+                job1_company: "VERANO P.V. ESTATE & BEACH FRONT VILLA, Pto. Vallarta",
+                job1_resp1: "Direction de l'expérience culinaire classée n°1 sur Tripadvisor pendant 3 années consécutives.",
+                job1_resp2: "Création de menus internationaux variés, cuisine locale et accords mets-vins haut de gamme.",
+                job1_resp3: "Gestion de la cuisine pour des clients de haut niveau dans des villas en bord de mer.",
+                job2_title: "Chef Instructeur & Chef à D'Cortes",
+                job2_date: "Précédent",
+                job2_company: "Instituto Gastronómico Vallarta & D'Cortes, Mexique",
+                job2_resp1: "Formation de nouvelles générations de chefs à l'Institut Gastronomique.",
+                job2_resp2: "Collaboration avec le Chef Leopoldo Cortés.",
+                job3_title: "Chef Exécutif / Sous-Chef / Chef de Partie",
+                job3_date: "International",
+                job3_company: "Four Season (Colombie & Costa Rica), Real InterContinental, Old Nü",
+                job3_resp1: "Ouverture d'un restaurant 7 diamants à Bogotá (Four Season).",
+                job3_resp2: "Innovation en cuisine moléculaire (Restaurant Old Nü).",
+                job3_resp3: "Expérience en haute cuisine (Stage chez Astrid & Gaston, Pérou).",
+                edu_title: "Formation",
+                edu1_title: "Master (Études)",
+                edu1_date: "---",
+                edu1_school: "Le Cordon Bleu",
+                edu2_title: "Licence (Diplômé)",
+                edu2_date: "---",
+                edu2_school: "Universidad Interamericana, Costa Rica"
+            }
+        };
+
+        // --- Función para cambiar idioma ---
+        function setLanguage(lang) {
+            // Actualizar el atributo 'lang' del tag <html>
+            document.documentElement.lang = lang; 
+            
+            // Obtener el conjunto de traducciones para el idioma seleccionado
+            const keys = translations[lang];
+
+            // Iterar sobre todos los elementos que tienen un atributo 'data-key'
+            document.querySelectorAll('[data-key]').forEach(element => {
+                const key = element.getAttribute('data-key');
+                if (keys[key]) {
+                    // Asignar el texto traducido
+                    element.textContent = keys[key];
+                }
+            });
+        }
+
+        // --- Evento del Selector de Idioma ---
+        languageSwitcher.addEventListener('change', (e) => {
+            // Cuando el usuario cambia la selección, llamar a setLanguage
+            setLanguage(e.target.value);
+        });
+
+        // --- Inicializar Idioma al Cargar ---
+        // Establecer el idioma basado en el valor seleccionado por defecto
+        setLanguage(languageSwitcher.value);
+
+    </script>
+</body>
+</html>
+
+
